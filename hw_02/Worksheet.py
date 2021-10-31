@@ -82,12 +82,12 @@ for _ in range(1000):
 
 # task 6 "Visualization"
 x = np.arange(1000)
-plt.plot(x, av_accuracy, "ro")
-plt.ylabel("accuracy")
-plt.axis([0, 1000, 0, 1])
-plt.show()
+fig, axs = plt.subplots(2)
 
-plt.plot(x, av_loss, "ro")
-plt.ylabel("loss")
-plt.axis([0, 1000, 0, 1])
+fig.suptitle("MLP Accuracy and Loss")
+axs[0].plot(x, av_accuracy, "ro")
+axs[0].set(ylabel="accuracy")
+
+axs[1].plot(x, av_loss, "ro")
+axs[1].set(ylabel="loss")
 plt.show()
