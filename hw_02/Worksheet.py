@@ -20,14 +20,14 @@ def dataGenerator(labels):
 
 
 dataGen = dataGenerator(outputs_AND)
-#dataGen = dataGenerator(outputs_OR)
-#dataGen = dataGenerator(outputs_NAND)
-#dataGen = dataGenerator(outputs_NOR)
-#dataGen = dataGenerator(outputs_XOR)
+# dataGen = dataGenerator(outputs_OR)
+# dataGen = dataGenerator(outputs_NAND)
+# dataGen = dataGenerator(outputs_NOR)
+# dataGen = dataGenerator(outputs_XOR)
 
 dataSet = []
 
-for i in range(10):
+for _ in range(10):
     dataSet.append(next(dataGen))
 
 
@@ -36,7 +36,7 @@ mlp = MLP()
 av_loss = []
 av_accuracy = []
 
-for i in range(1000):
+for _ in range(1000):
 
     loss = []
     accuracy = []
@@ -49,10 +49,12 @@ for i in range(1000):
 
         mlp.forward_step(inputs)
 
-        l = (target - mlp.output)**2
+        l = (target - mlp.output) ** 2
         loss.append(l)
 
-        if (target == 1 and mlp.output > 0.5) ^ (target == 0 and mlp.output <= 0.5):
+        if (target == 1 and mlp.output > 0.5) ^ (
+            target == 0 and mlp.output <= 0.5
+        ):
             correct += 1
 
         a = correct / (count + 1)
@@ -71,13 +73,12 @@ for i in range(1000):
 
 # task 6 "Visualization"
 x = np.arange(1000)
-plt.plot(x, av_accuracy, 'ro')
-plt.ylabel('accuracy')
+plt.plot(x, av_accuracy, "ro")
+plt.ylabel("accuracy")
 plt.axis([0, 1000, 0, 1])
 plt.show()
 
-plt.plot(x, av_loss, 'ro')
-plt.ylabel('loss')
+plt.plot(x, av_loss, "ro")
+plt.ylabel("loss")
 plt.axis([0, 1000, 0, 1])
 plt.show()
-

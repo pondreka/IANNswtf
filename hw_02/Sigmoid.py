@@ -8,8 +8,3 @@ def sigmoid(x):
 
 def sigmoidprime(x):
     return sigmoid(x) * (1 - sigmoid(x))
-
-
-
-
-

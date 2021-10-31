@@ -5,7 +5,6 @@ from Perceptron import Perceptron
 
 # task 4 "Multi-Layer Perceptron"
 class MLP:
-
     def __init__(self):
 
         self.hiddenLayer = []
@@ -32,7 +31,7 @@ class MLP:
 
     def backprop_step(self, target):
 
-        deltaN = - (target - self.output) * self.output * (1 - self.output)
+        deltaN = -(target - self.output) * self.output * (1 - self.output)
 
         self.outputPerceptron.update(deltaN, self.ins[1])
 

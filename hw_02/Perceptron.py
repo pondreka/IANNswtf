@@ -4,7 +4,6 @@ from Sigmoid import sigmoid
 
 # task 3 "Perceptron"
 class Perceptron:
-
     def __init__(self, input_units):
         self.weights = np.random.randn(input_units)
         self.bias = np.random.randn()
@@ -25,5 +24,3 @@ class Perceptron:
 
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * delta * inputs[i]
-
-
