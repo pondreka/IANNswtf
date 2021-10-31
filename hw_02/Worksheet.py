@@ -13,7 +13,17 @@ outputs_NOR = np.array([1, 0, 0, 0])
 outputs_XOR = np.array([0, 1, 1, 0])
 
 
-def dataGenerator(labels):
+def dataGenerator(labels: np.array) -> np.array:
+    """Simple semi-random array generator function.
+
+    Args:
+        labels (np.array): the output labels to use for data.
+
+    Returns:
+        (np.array): a 1-D array with 3 entries. First two are inputs and
+            the last one is the expected output (based on label).
+
+    """
     while True:
         rand = np.random.randint(0, 4)
         yield np.array([inputs[rand, 0], inputs[rand, 1], labels[rand]])
@@ -27,6 +37,7 @@ dataGen = dataGenerator(outputs_AND)
 
 dataSet = []
 
+# Creating an artificial dataset for the chosen label function on top
 for _ in range(10):
     dataSet.append(next(dataGen))
 
@@ -49,16 +60,14 @@ for _ in range(1000):
 
         mlp.forward_step(inputs)
 
-        l = (target - mlp.output) ** 2
-        loss.append(l)
+        loss.append((target - mlp.output) ** 2)
 
         if (target == 1 and mlp.output > 0.5) ^ (
             target == 0 and mlp.output <= 0.5
         ):
             correct += 1
 
-        a = correct / (count + 1)
-        accuracy.append(a)
+        accuracy.append(correct / (count + 1))
 
         mlp.backprop_step(target)
 
