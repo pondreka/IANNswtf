@@ -2,7 +2,7 @@ import numpy as np
 from Sigmoid import sigmoid
 
 
-# task 3 "Perceptron"
+# ------------- task 3 "Perceptron" -------------
 class Perceptron:
     """Instance representation of a single perceptron."""
     def __init__(self, input_units: int):
@@ -26,17 +26,23 @@ class Perceptron:
             (float): the final activation of the perceptron.
 
         """
+
+        # calculate net input
         drive = self.bias
         for i in range(len(inputs)):
             drive += inputs[i] * self.weights[i]
+
         # Update our saved inputs
         self.inputs = inputs
+
         return sigmoid(drive)
 
-    # IMPORTANT CHANGES: removed `inputs` param, and used saved one
     def update(self, delta):
         """Helper function to update bias and weights."""
+
+        # update bias
         self.bias -= self.alpha * delta
 
+        # update weights
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * delta * self.inputs[i]

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-# task 1 "Preparation"
+# ---------- task 1 "Preparation" -----------
 def sigmoid(x: float) -> float:
     """Basic sigmoid function."""
     return 1 / (1 + np.exp(-x))
