@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 inputs = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])
 outputs_AND = np.array([0, 0, 0, 1])
 outputs_OR = np.array([0, 1, 1, 1])
-outputs_NAND = np.array([0, 1, 1, 1])
+outputs_NAND = np.array([1, 1, 1, 0])
 outputs_NOR = np.array([1, 0, 0, 0])
 outputs_XOR = np.array([0, 1, 1, 0])
 
