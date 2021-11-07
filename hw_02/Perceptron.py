@@ -12,7 +12,7 @@ class Perceptron:
         self.bias = np.random.randn()
         # learning rate
         self.alpha = 1
-        # the actual incoming inputs (will be updated every forward ste)
+        # the actual incoming inputs (will be updated every forward step)
         self.inputs = np.zeros(input_units)
 
     def forward_step(self, inputs: np.array) -> float:
@@ -37,7 +37,7 @@ class Perceptron:
 
         return sigmoid(drive)
 
-    def update(self, delta):
+    def update(self, delta: float) -> None:
         """Helper function to update bias and weights."""
 
         # update bias
