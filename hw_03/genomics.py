@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -5,7 +6,6 @@ import tensorflow_datasets as tfds
 # --------- task 1 "Data Set" ---------------
 
 
-@tf.function
 def one_hot_converter(tensor):
     vocab = {"A": "1", "C": "2", "G": "3", "T": "0"}
     for key in vocab.keys():
@@ -17,22 +17,30 @@ def one_hot_converter(tensor):
     return onehot
 
 
-train_ds = tfds.load(
-    "genomics_ood", split="train", shuffle_files=True, as_supervised=True
+def prepare_ds(dataset, take_amount: int = 100000):
+    dataset = dataset.take(take_amount)
+    dataset = dataset.map(
+        lambda seq, label: (one_hot_converter(seq), tf.one_hot(label, 10))
+    )
+    dataset = dataset.cache()
+    dataset = dataset.shuffle(1000)
+    dataset = dataset.batch(32)
+    dataset = dataset.prefetch(10)
+    return dataset
+
+
+def prepare_ds_thousand(dataset):
+    return prepare_ds(dataset, 1000)
+
+
+train_ds, test_ds = tfds.load(
+    "genomics_ood",
+    split=["train", "test"],
+    shuffle_files=True,
+    as_supervised=True,
 )
-test_ds = tfds.load(
-    "genomics_ood", split="test", shuffle_files=True, as_supervised=True
-)
-train_ds = train_ds.take(100000)
-test_ds = test_ds.take(1000)
-train_ds = train_ds.map(
-    lambda seq, label: (one_hot_converter(seq), tf.one_hot(label, 10))
-)
-test_ds = test_ds.map(
-    lambda seq, label: (one_hot_converter(seq), tf.one_hot(label, 10))
-)
-train_ds = train_ds.batch(32).prefetch(10)
-test_ds = test_ds.batch(32).prefetch(10)
+train_ds = train_ds.apply(prepare_ds)
+test_ds = test_ds.apply(prepare_ds_thousand)
 
 
 # --------- task 2 "Model" ---------------
@@ -60,6 +68,9 @@ class CustomLayer(tf.keras.layers.Layer):
 
     @tf.function
     def call(self, inputs):
+        if inputs.dtype.base_dtype != self._compute_dtype_object.base_dtype:
+            inputs = tf.cast(inputs, dtype=self._compute_dtype_object)
+        # self.build(inputs.shape)
         incoming_inputs = tf.matmul(inputs, self.weights) + self.bias
         return self.activation(incoming_inputs)
 
@@ -82,3 +93,53 @@ class CustomModel(tf.keras.Model):
 
 
 # --------- task 3 "Training" ---------------
+
+
+@tf.function
+def train_step(model, input, target, loss_function, optimizer) -> (list, list):
+    # loss_object and optimizer_bject are instances of respective
+    # tensorflow classes
+    with tf.GradientTape() as tape:
+        prediction = model(input)
+        loss = loss_function(target, prediction)
+        gradients = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    return loss
+
+
+@tf.function
+def test(model, test_data, loss_function):
+    # test over complete test data
+    test_accuracy_aggregator = []
+    test_loss_aggregator = []
+    for (input, target) in test_data:
+        prediction = model(input)
+        sample_test_loss = loss_function(target, prediction)
+        sample_test_accuracy = np.argmax(target, axis=1) == np.argmax(
+            prediction, axis=1
+        )
+        sample_test_accuracy = np.mean(sample_test_accuracy)
+        test_loss_aggregator.append(sample_test_loss.numpy())
+        test_accuracy_aggregator.append(np.mean(sample_test_accuracy))
+
+    test_loss = tf.reduce_mean(test_loss_aggregator)
+    test_accuracy = tf.reduce_mean(test_accuracy_aggregator)
+
+    return test_loss, test_accuracy
+
+
+learn_rate = 0.1
+cross_entropy_loss = tf.keras.losses.CategoricalCrossentropy()
+num_epochs = 10
+
+super_model = CustomModel()
+optimizer = tf.keras.optimizers.SGD(learn_rate)
+
+# Prepare some data for the final visualization
+# lists of tensors
+train_losses: list = []
+
+test_losses: list = []
+test_accuracies: list = []
+
+test_loss, test_accuracy = test(super_model, test_ds, cross_entropy_loss)
