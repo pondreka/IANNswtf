@@ -42,8 +42,10 @@ train_ds, test_ds = tfds.load(
 train_ds = train_ds.apply(prepare_ds)
 test_ds = test_ds.apply(prepare_ds_thousand)
 
+for elem in train_ds.take(1):
+    print(elem)
 
-# --------- task 2 "Model" ---------------
+# ---------- task 2 "Model" -----------
 # first we define a custom layer
 
 
@@ -51,27 +53,22 @@ class CustomLayer(tf.keras.layers.Layer):
     """A custom dense layer."""
 
     def __init__(self, units=256, activation=tf.nn.sigmoid):
-        super().__init__()
+        super(CustomLayer, self).__init__()
         self.units = units
         self.activation = activation
 
-    @tf.function
     def build(self, input_shape):
-        self.weights = self.add_weight(
+        self.w = self.add_weight(
             shape=(input_shape[-1], self.units),
             initializer="random_normal",
             trainable=True,
         )
-        self.bias = self.add_weight(
-            shape=(self.units), initializer="random_normal", traiable=True,
+        self.b = self.add_weight(
+            shape=(self.units,), initializer="random_normal", trainable=True,
         )
 
-    @tf.function
     def call(self, inputs):
-        if inputs.dtype.base_dtype != self._compute_dtype_object.base_dtype:
-            inputs = tf.cast(inputs, dtype=self._compute_dtype_object)
-        # self.build(inputs.shape)
-        incoming_inputs = tf.matmul(inputs, self.weights) + self.bias
+        incoming_inputs = tf.matmul(inputs, self.w) + self.b
         return self.activation(incoming_inputs)
 
 
@@ -80,12 +77,11 @@ class CustomModel(tf.keras.Model):
     """Simple custom Model definition (MLP)."""
 
     def __init__(self):
-        super().__init__()
+        super(CustomModel, self).__init__()
         self.hidden_layer1 = CustomLayer()
         self.hidden_layer2 = CustomLayer()
         self.output_layer = CustomLayer(units=10, activation=tf.nn.softmax)
 
-    @tf.function
     def call(self, inputs):
         output_of_hl_1 = self.hidden_layer1(inputs)
         output_of_hl_2 = self.hidden_layer2(output_of_hl_1)
@@ -95,8 +91,7 @@ class CustomModel(tf.keras.Model):
 # --------- task 3 "Training" ---------------
 
 
-@tf.function
-def train_step(model, input, target, loss_function, optimizer) -> (list, list):
+def train_step(model, input, target, loss_function, optimizer):
     # loss_object and optimizer_bject are instances of respective
     # tensorflow classes
     with tf.GradientTape() as tape:
@@ -107,7 +102,6 @@ def train_step(model, input, target, loss_function, optimizer) -> (list, list):
     return loss
 
 
-@tf.function
 def test(model, test_data, loss_function):
     # test over complete test data
     test_accuracy_aggregator = []
@@ -142,4 +136,32 @@ train_losses: list = []
 test_losses: list = []
 test_accuracies: list = []
 
+
+# testing once before we begin
 test_loss, test_accuracy = test(super_model, test_ds, cross_entropy_loss)
+test_losses.append(test_loss)
+test_accuracies.append(test_accuracy)
+
+# check how model performs on train data once before we begin
+train_loss, _ = test(super_model, train_ds, cross_entropy_loss)
+train_losses.append(train_loss)
+
+# We train for num_epochs epochs.
+for epoch in range(num_epochs):
+    print(f"Epoch: {str(epoch)} starting with accuracy {test_accuracies[-1]}")
+
+    # training (and checking in with training)
+    epoch_loss_agg = []
+    for input, target in train_ds:
+        train_loss = train_step(
+            super_model, input, target, cross_entropy_loss, optimizer
+        )
+        epoch_loss_agg.append(train_loss)
+
+    # track training loss
+    train_losses.append(tf.reduce_mean(epoch_loss_agg))
+
+    # testing, so we can track accuracy and test loss
+    test_loss, test_accuracy = test(super_model, test_ds, cross_entropy_loss)
+    test_losses.append(test_loss)
+    test_accuracies.append(test_accuracy)
