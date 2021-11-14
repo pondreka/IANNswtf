@@ -38,15 +38,13 @@ class CustomModel(tf.keras.Model):
         self.hidden_layer2 = CustomLayer()
         self.output_layer = CustomLayer(units=1, activation=tf.nn.sigmoid)
         # Dropout layer
-        self.droput_layer = tf.keras.layers.Dropout(rate=0.2)
+        self.dropout_layer = tf.keras.layers.Dropout(rate=0.1)
 
     @tf.function
     def call(self, inputs):
         output_of_hl_1 = self.hidden_layer1(inputs)
         # do some dropout at input
-        output_of_hl_1 = self.droput_layer(output_of_hl_1)
+        output_of_hl_1 = self.dropout_layer(output_of_hl_1)
         output_of_hl_2 = self.hidden_layer2(output_of_hl_1)
         return self.output_layer(output_of_hl_2)
-
-
 

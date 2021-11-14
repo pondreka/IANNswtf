@@ -63,11 +63,12 @@ super_model = custom_model.CustomModel()
 
 # Task 3: Training
 
-num_epochs = 10
-learning_rate = 0.1
+num_epochs = 100
+learning_rate = 0.0001
 
 binary_cross_entropy = tf.keras.losses.BinaryCrossentropy()
-optimizer = tf.keras.optimizers.SGD(learning_rate)
+# Super optimizer
+optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # Prepare some data for the final visualization
 # lists of tensors

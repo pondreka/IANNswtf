@@ -15,7 +15,7 @@ def train_step(model, input, target, loss_function, optimizer):
     return loss, accuracy
 
 
-def test(model, test_data, loss_function) -> None:
+def test(model, test_data, loss_function):
     """ test iteration over complete test data """
     test_accuracy_aggregator = []
     test_loss_aggregator = []
@@ -32,4 +32,4 @@ def test(model, test_data, loss_function) -> None:
 
     return test_loss, test_accuracy
 
-    pass
+
