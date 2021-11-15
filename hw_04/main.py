@@ -27,7 +27,8 @@ if __name__ == "__main__":
     def df_to_ds(df, batch_size=32):
         df = df.copy()
         labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
-
+        # we normalize the input before adding it to ds
+        # df = df / df.sum(axis=0)
         ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
         # create a binary target
