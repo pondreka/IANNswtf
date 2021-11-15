@@ -51,8 +51,8 @@ if __name__ == "__main__":
 
     # --------- task 3 "Training" ---------
 
-    num_epochs = 10
-    learning_rate = 0.1
+    num_epochs = 100
+    learning_rate = 0.001
 
     binary_loss = tf.keras.losses.BinaryCrossentropy()
     optimizer = tf.keras.optimizers.SGD(learning_rate)

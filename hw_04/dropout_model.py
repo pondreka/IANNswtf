@@ -18,9 +18,10 @@ class CustomLayer(tf.keras.layers.Layer):
             shape=(input_shape[-1], self.units),
             initializer="random_normal",
             trainable=True,
+            regularizer=tf.keras.regularizers.L1L2()
         )
         self.b = self.add_weight(
-            shape=(self.units,), initializer="random_normal", trainable=True,
+            shape=(self.units,), initializer="random_normal", trainable=True
         )
 
     @tf.function
@@ -39,7 +40,7 @@ class DropoutModel(tf.keras.Model):
         self.hidden_layer2 = CustomLayer()
         self.output_layer = CustomLayer(units=1)
         # Dropout Layer
-        self.dropout_layer = tf.keras.layers.Dropout(rate=0.2)
+        self.dropout_layer = tf.keras.layers.Dropout(rate=0.1)
 
     @tf.function
     def call(self, inputs):
