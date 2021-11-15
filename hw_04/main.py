@@ -141,8 +141,8 @@ if __name__ == "__main__":
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
         print(
-            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies[-1]}"
-            f"\n\t\tValid accuracy:\t{test_accuracies[-1]}"
+            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies_2[-1]}"
+            f"\n\t\tValid accuracy:\t{test_accuracies_2[-1]}"
         )
 
         # training (and checking in with training)
