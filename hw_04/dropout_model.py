@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 # ---------- task 2 "Model" -----------
 
 
@@ -31,17 +32,21 @@ class CustomLayer(tf.keras.layers.Layer):
 
 
 # Definition of a custom model by using the custom layers.
-class CustomModel(tf.keras.Model):
+class DropoutModel(tf.keras.Model):
     """Simple custom Model definition (MLP)."""
 
     def __init__(self):
-        super(CustomModel, self).__init__()
+        super(DropoutModel, self).__init__()
         self.hidden_layer1 = CustomLayer()
         self.hidden_layer2 = CustomLayer()
         self.output_layer = CustomLayer(units=1)
+        # Dropout Layer
+        self.dropout_layer = tf.keras.layers.Dropout(rate=0.2)
 
     @tf.function
     def call(self, inputs):
         output_of_hl_1 = self.hidden_layer1(inputs)
+        # Dropout between the hidden layers
+        output_of_hl_1 = self.dropout_layer(output_of_hl_1)
         output_of_hl_2 = self.hidden_layer2(output_of_hl_1)
         return self.output_layer(output_of_hl_2)
