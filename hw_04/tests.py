@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
+
 def train_step(model, input, target, loss_function, optimizer):
     """ training iteration over one input"""
     # loss object and optimizer object are instances of respective
@@ -31,5 +32,3 @@ def test(model, test_data, loss_function):
     test_accuracy = tf.reduce_mean(test_accuracy_aggregator)
 
     return test_loss, test_accuracy
-
-

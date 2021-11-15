@@ -6,19 +6,15 @@ from dropout_model import DropoutModel
 from training_and_test import test, train_step
 import matplotlib.pyplot as plt
 import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
 if __name__ == "__main__":
 
-
     # ------------ task 1 "Data set" -------------
-    # ------------ task 1.1 "Load Data into a Dataframe" ----------------
-    wine_df = pd.read_csv('winequality-red.csv', sep=';')
-    print(wine_df.keys())
-    """Index(['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
-                'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
-                'pH', 'sulphates', 'alcohol', 'quality'],dtype='object')"""
+    # ------------ task 1.1 "Load Data into a Dataframe" ---------------
+    wine_df = pd.read_csv("winequality-red.csv", sep=";")
 
     # ------------ task 1.2 "Create a Tensorflow Dataset and Dataset Pipeline" -----------
 
@@ -27,7 +23,6 @@ if __name__ == "__main__":
     wine_df = wine_df.drop(train_df.index, axis=0)
     valid_df = wine_df.sample(frac=0.5, random_state=random_stat)
     test_df = wine_df.drop(valid_df.index, axis=0)
-
 
     def df_to_ds(df, batch_size=32):
         df = df.copy()
@@ -44,7 +39,6 @@ if __name__ == "__main__":
         ds = ds.prefetch(16)
 
         return ds
-
 
     train_ds = df_to_ds(train_df)
     valid_ds = df_to_ds(valid_df)
@@ -74,7 +68,6 @@ if __name__ == "__main__":
     test_losses: list = []
     test_accuracies: list = []
 
-
     # testing all data once before we begin
     test_loss, test_accuracy = test(model, test_ds, binary_loss)
     test_losses.append(test_loss)
@@ -88,16 +81,20 @@ if __name__ == "__main__":
     train_losses.append(train_loss)
     train_accuracies.append(train_accuracy)
 
-
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
-        print(f'Epoch {str(epoch)}: Train accuracy:{train_accuracies[-1]} Valid accuracy {test_accuracies[-1]}')
+        print(
+            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies[-1]}"
+            f"\n\t\tValid accuracy:\t{test_accuracies[-1]}"
+        )
 
         # training (and checking in with training)
         epoch_loss_agg = []
         epoch_accuracy_agg = []
         for input, target in train_ds:
-            train_loss, train_accuracy = train_step(model, input, target, binary_loss, optimizer)
+            train_loss, train_accuracy = train_step(
+                model, input, target, binary_loss, optimizer
+            )
             epoch_loss_agg.append(train_loss)
             epoch_accuracy_agg.append(train_accuracy)
 
@@ -114,7 +111,6 @@ if __name__ == "__main__":
         test_losses.append(test_loss)
         test_accuracies.append(test_accuracy)
 
-
     # ------------ task 4 "Fine-Tuning" --------------
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
@@ -128,7 +124,6 @@ if __name__ == "__main__":
 
     test_losses_2: list = []
     test_accuracies_2: list = []
-
 
     # testing all data once before we begin
     test_loss, test_accuracy = test(model, test_ds, binary_loss)
@@ -145,13 +140,18 @@ if __name__ == "__main__":
 
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
-        print(f'Epoch {str(epoch)}: Train accuracy:{train_accuracies[-1]} Valid accuracy {test_accuracies[-1]}')
+        print(
+            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies[-1]}"
+            f"\n\t\tValid accuracy:\t{test_accuracies[-1]}"
+        )
 
         # training (and checking in with training)
         epoch_loss_agg = []
         epoch_accuracy_agg = []
         for input, target in train_ds:
-            train_loss, train_accuracy = train_step(dropout_model, input, target, binary_loss, adam_optimizer)
+            train_loss, train_accuracy = train_step(
+                dropout_model, input, target, binary_loss, adam_optimizer
+            )
             epoch_loss_agg.append(train_loss)
             epoch_accuracy_agg.append(train_accuracy)
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     axes[0].plot(test_losses, label="test loss")
     axes[0].plot(test_accuracies, label="test accuracy")
     axes[0].set(ylabel="Loss/Accuracy", title="Before Refinement")
-    axes[0].legend(loc='upper right')
+    axes[0].legend(loc="upper right")
 
     axes[1].plot(train_losses_2, label="train loss")
     axes[1].plot(train_accuracies_2, label="train accuracy")
@@ -189,6 +189,6 @@ if __name__ == "__main__":
     axes[1].plot(test_losses_2, label="test loss")
     axes[1].plot(test_accuracies_2, label="test accuracy")
     axes[1].set(ylabel="Loss/Accuracy", title="After Refinement")
-    axes[1].legend(loc='upper right')
+    axes[1].legend(loc="upper right")
 
     plt.show()

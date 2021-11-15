@@ -20,9 +20,7 @@ class CustomLayer(tf.keras.layers.Layer):
             trainable=True,
         )
         self.b = self.add_weight(
-            shape=(self.units,),
-            initializer="random_normal",
-            trainable=True,
+            shape=(self.units,), initializer="random_normal", trainable=True,
         )
 
     @tf.function

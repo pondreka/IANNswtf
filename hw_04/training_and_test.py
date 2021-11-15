@@ -4,6 +4,7 @@ import numpy as np
 # --------- task 3 "Training" ---------------
 # Definition of all the necessary funtions for training
 
+
 def train_step(model, input, target, loss_function, optimizer):
     """ training iteration over one input"""
     # loss object and optimizer object are instances of respective
