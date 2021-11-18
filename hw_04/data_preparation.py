@@ -5,8 +5,9 @@ import tensorflow as tf
 
 
 def prepare_dataframe(csv_name: str) -> tuple:
-    """
+    """ Load the provided CSV file ans split the dataframe into train, valid and test.
 
+    :param csv_name: CSV file name to load
     """
     # ------------ task 1.1 "Load Data into a Dataframe" ---------------
     wine_df = pd.read_csv(csv_name, sep=";")
@@ -23,13 +24,14 @@ def prepare_dataframe(csv_name: str) -> tuple:
 
 def dataset_generation(dataframe, batch_size: int = 32):
     """
-    Build a Tensorflow dataset from the dataframes and apply pipelines
+    Build a Tensorflow dataset from the dataframes and define pipelines
 
+    :param dataframe: data for the dataset preparation
+    :param batch_size: the batching size
     """
     df = dataframe.copy()
     labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
-    # we normalize the input before adding it to ds
-    # df = df / df.sum(axis=0)
+
     ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
     # create a binary target
@@ -38,7 +40,33 @@ def dataset_generation(dataframe, batch_size: int = 32):
     ds = ds.cache()
     ds = ds.shuffle(128)
     ds = ds.batch(batch_size)
-    ds = ds.prefetch(16)
+    ds = ds.prefetch(32)
 
     return ds
+
+
+def normalized_dataset_generation(dataframe, batch_size: int = 32):
+    """
+    Build a Tensorflow dataset from the dataframes and apply pipelines
+
+    :param batch_size: the batching size
+    """
+    df = dataframe.copy()
+    labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
+
+    # min-max normalization of the input
+    df = (df - df.min()) / (df.max() - df.min())
+
+    ds = tf.data.Dataset.from_tensor_slices((df, labels))
+
+    # create a binary target
+    ds = ds.map(lambda input, target: (input, target > 5))
+
+    ds = ds.cache()
+    ds = ds.shuffle(128)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(32)
+
+    return ds
+
 

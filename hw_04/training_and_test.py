@@ -12,7 +12,8 @@ def train_step(model: tf.keras.Model,
                loss_function: tf.keras.losses,
                optimizer: tf.keras.optimizers
                ) -> (tf.Tensor, float):
-    """ Training iteration over one input data
+    """
+    Training iteration over one input data
 
     :param model: Model to train.
     :param data: Data used to calculate the predictions.
@@ -38,7 +39,8 @@ def test(model: tf.keras.Model,
          test_data,
          loss_function: tf.keras.losses
          ) -> (tf.Tensor, float):
-    """ Test iteration over all test data
+    """
+    Test iteration over all test data
 
     :param model: Model to train.
     :param test_data: Dataset to test with the model.
