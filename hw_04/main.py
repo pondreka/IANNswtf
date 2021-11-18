@@ -1,58 +1,27 @@
+
 import tensorflow as tf
-import pandas as pd
-import numpy as np
 from custom_model import CustomModel
 from dropout_model import DropoutModel
+from hw_04.data_preparation import dataset_generation, prepare_dataframe
 from training_and_test import test, train_step
 import matplotlib.pyplot as plt
 import os
-
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
-if __name__ == "__main__":
-
+def main():
     # ------------ task 1 "Data set" -------------
-    # ------------ task 1.1 "Load Data into a Dataframe" ---------------
-    wine_df = pd.read_csv("winequality-red.csv", sep=";")
-
-    # ------------ task 1.2 "Create a Tensorflow Dataset and Dataset Pipeline" -----------
-
-    random_stat = np.random.RandomState()
-    train_df = wine_df.sample(frac=0.7, random_state=random_stat)
-    wine_df = wine_df.drop(train_df.index, axis=0)
-    valid_df = wine_df.sample(frac=0.5, random_state=random_stat)
-    test_df = wine_df.drop(valid_df.index, axis=0)
-
-    def df_to_ds(df, batch_size=32):
-        df = df.copy()
-        labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
-        # we normalize the input before adding it to ds
-        # df = df / df.sum(axis=0)
-        ds = tf.data.Dataset.from_tensor_slices((df, labels))
-
-        # create a binary target
-        ds = ds.map(lambda input, target: (input, target > 5))
-
-        ds = ds.cache()
-        ds = ds.shuffle(128)
-        ds = ds.batch(batch_size)
-        ds = ds.prefetch(16)
-
-        return ds
-
-    train_ds = df_to_ds(train_df)
-    valid_ds = df_to_ds(valid_df)
-    test_ds = df_to_ds(test_df)
+    train_df, valid_df, test_df = prepare_dataframe(csv_name="winequality-red.csv")
+    train_ds = dataset_generation(train_df)
+    valid_ds = dataset_generation(valid_df)
+    test_ds = dataset_generation(test_df)
 
     # --------- task 2 "Model" ----------
-
     model = CustomModel()
     dropout_model = DropoutModel()
 
     # --------- task 3 "Training" ---------
-
-    num_epochs = 100
+    num_epochs = 10
     learning_rate = 0.001
 
     binary_loss = tf.keras.losses.BinaryCrossentropy()
@@ -85,8 +54,9 @@ if __name__ == "__main__":
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
         print(
-            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies[-1]}"
-            f"\n\t\tValid accuracy:\t{test_accuracies[-1]}"
+            f"\nEpoch {epoch}: Train accuracy:\t{train_accuracies[-1]}"
+            f"\n\t\t Valid accuracy:\t{valid_accuracies[-1]}"
+            f"\n\t\t Test accuracy:\t\t{test_accuracies[-1]}"
         )
 
         # training (and checking in with training)
@@ -142,8 +112,10 @@ if __name__ == "__main__":
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
         print(
-            f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies_2[-1]}"
-            f"\n\t\tValid accuracy:\t{test_accuracies_2[-1]}"
+            f"\nEpoch {epoch}: Train accuracy:\t{train_accuracies_2[-1]}"
+            f"\n\t\t Valid accuracy:\t{valid_accuracies_2[-1]}"
+            f"\n\t\t Test accuracy:\t\t{test_accuracies_2[-1]}"
+
         )
 
         # training (and checking in with training)
@@ -193,3 +165,7 @@ if __name__ == "__main__":
     axes[1].legend(loc="upper right")
 
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
