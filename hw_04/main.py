@@ -27,8 +27,7 @@ if __name__ == "__main__":
     def df_to_ds(df, batch_size=32):
         df = df.copy()
         labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
-        # we normalize the input before adding it to ds
-        # df = df / df.sum(axis=0)
+
         ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
         # create a binary target
@@ -37,13 +36,35 @@ if __name__ == "__main__":
         ds = ds.cache()
         ds = ds.shuffle(128)
         ds = ds.batch(batch_size)
-        ds = ds.prefetch(16)
+        ds = ds.prefetch(32)
+
+        return ds
+
+    def df_to_ds_with_norm(df, batch_size=32):
+        df = df.copy()
+        labels = tf.squeeze(tf.constant([df.pop("quality")]), axis=0)
+
+        # min-max normalization of the input
+        df = (df - df.min()) / (df.max() - df.min())
+
+        ds = tf.data.Dataset.from_tensor_slices((df, labels))
+
+        # create a binary target
+        ds = ds.map(lambda input, target: (input, target > 5))
+
+        ds = ds.cache()
+        ds = ds.shuffle(128)
+        ds = ds.batch(batch_size)
+        ds = ds.prefetch(32)
 
         return ds
 
     train_ds = df_to_ds(train_df)
+    train_ds_2 = df_to_ds_with_norm(train_df)
     valid_ds = df_to_ds(valid_df)
+    valid_ds_2 = df_to_ds_with_norm(valid_df)
     test_ds = df_to_ds(test_df)
+    test_ds_2 = df_to_ds_with_norm(test_df)
 
     # --------- task 2 "Model" ----------
 
@@ -86,7 +107,7 @@ if __name__ == "__main__":
     for epoch in range(num_epochs):
         print(
             f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies[-1]}"
-            f"\n\t\tValid accuracy:\t{test_accuracies[-1]}"
+            f"\n\t\tValid accuracy:\t{valid_accuracies[-1]}"
         )
 
         # training (and checking in with training)
@@ -127,15 +148,15 @@ if __name__ == "__main__":
     test_accuracies_2: list = []
 
     # testing all data once before we begin
-    test_loss, test_accuracy = test(model, test_ds, binary_loss)
+    test_loss, test_accuracy = test(model, test_ds_2, binary_loss)
     test_losses_2.append(test_loss)
     test_accuracies_2.append(test_accuracy)
 
-    valid_loss, valid_accuracy = test(model, valid_ds, binary_loss)
+    valid_loss, valid_accuracy = test(model, valid_ds_2, binary_loss)
     valid_losses_2.append(valid_loss)
     valid_accuracies_2.append(test_accuracy)
 
-    train_loss, train_accuracy = test(model, train_ds, binary_loss)
+    train_loss, train_accuracy = test(model, train_ds_2, binary_loss)
     train_losses_2.append(train_loss)
     train_accuracies_2.append(train_accuracy)
 
@@ -143,13 +164,13 @@ if __name__ == "__main__":
     for epoch in range(num_epochs):
         print(
             f"Epoch {epoch}:\tTrain accuracy:\t{train_accuracies_2[-1]}"
-            f"\n\t\tValid accuracy:\t{test_accuracies_2[-1]}"
+            f"\n\t\tValid accuracy:\t{valid_accuracies_2[-1]}"
         )
 
         # training (and checking in with training)
         epoch_loss_agg = []
         epoch_accuracy_agg = []
-        for input, target in train_ds:
+        for input, target in train_ds_2:
             train_loss, train_accuracy = train_step(
                 dropout_model, input, target, binary_loss, adam_optimizer
             )
@@ -161,35 +182,40 @@ if __name__ == "__main__":
         train_accuracies_2.append(tf.reduce_mean(epoch_accuracy_agg))
 
         # testing, so we can track valid accuracy and valid loss
-        valid_loss, valid_accuracy = test(dropout_model, valid_ds, binary_loss)
+        valid_loss, valid_accuracy = test(dropout_model, valid_ds_2, binary_loss)
         valid_losses_2.append(valid_loss)
         valid_accuracies_2.append(valid_accuracy)
 
-        test_loss, test_accuracy = test(dropout_model, test_ds, binary_loss)
+        test_loss, test_accuracy = test(dropout_model, test_ds_2, binary_loss)
         test_losses_2.append(test_loss)
         test_accuracies_2.append(test_accuracy)
 
     # ------------ task 5 "Visualization" ---------------
     # Visualize accuracy and loss for training and test data.
 
-    fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(9, 6))
+    fig, axes = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(9, 6))
 
     axes[0].plot(train_losses, label="train loss")
-    axes[0].plot(train_accuracies, label="train accuracy")
+    axes[2].plot(train_accuracies, label="train accuracy")
     axes[0].plot(valid_losses, label="valid loss")
-    axes[0].plot(valid_accuracies, label="valid accuracy")
+    axes[2].plot(valid_accuracies, label="valid accuracy")
     axes[0].plot(test_losses, label="test loss")
-    axes[0].plot(test_accuracies, label="test accuracy")
-    axes[0].set(ylabel="Loss/Accuracy", title="Before Refinement")
+    axes[2].plot(test_accuracies, label="test accuracy")
+    axes[0].set(ylabel="Loss", title="Loss Before Refinement")
     axes[0].legend(loc="upper right")
+    axes[2].set(ylabel="Accuracy", title="Accuracy Before Refinement")
+    axes[2].legend(loc="upper right")
 
     axes[1].plot(train_losses_2, label="train loss")
-    axes[1].plot(train_accuracies_2, label="train accuracy")
+    axes[3].plot(train_accuracies_2, label="train accuracy")
     axes[1].plot(valid_losses_2, label="valid loss")
-    axes[1].plot(valid_accuracies_2, label="valid accuracy")
+    axes[3].plot(valid_accuracies_2, label="valid accuracy")
     axes[1].plot(test_losses_2, label="test loss")
-    axes[1].plot(test_accuracies_2, label="test accuracy")
-    axes[1].set(ylabel="Loss/Accuracy", title="After Refinement")
+    axes[3].plot(test_accuracies_2, label="test accuracy")
+    axes[1].set(ylabel="Loss", title="Loss After Refinement")
     axes[1].legend(loc="upper right")
+    axes[3].set(ylabel="Accuracy", title="Accuracy After Refinement")
+    axes[3].legend(loc="upper right")
 
+    plt.tight_layout()
     plt.show()
