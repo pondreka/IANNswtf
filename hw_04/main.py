@@ -58,8 +58,8 @@ def main():
                                      num_epochs=num_epochs,
                                      optimizer=adam_optimizer,
                                      train_ds=train_ds,
-                                     valid_ds=train_ds,
-                                     test_ds=train_ds)
+                                     valid_ds=valid_ds,
+                                     test_ds=test_ds)
 
     # ------------ task 5 "Visualization" ---------------
     # Visualize accuracy and loss for training and test data.

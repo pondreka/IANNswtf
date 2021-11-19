@@ -35,7 +35,7 @@ def dataset_generation(dataframe, batch_size: int = 32):
     ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
     # create a binary target
-    ds = ds.map(lambda input, target: (input, target > 5))
+    ds = ds.map(lambda _, target: (_, target > 5))
 
     ds = ds.cache()
     ds = ds.shuffle(128)
@@ -49,6 +49,7 @@ def normalized_dataset_generation(dataframe, batch_size: int = 32):
     """
     Build a Tensorflow dataset from the dataframes and apply pipelines
 
+    :param dataframe: data for the dataset preparation
     :param batch_size: the batching size
     """
     df = dataframe.copy()
@@ -60,7 +61,7 @@ def normalized_dataset_generation(dataframe, batch_size: int = 32):
     ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
     # create a binary target
-    ds = ds.map(lambda input, target: (input, target > 5))
+    ds = ds.map(lambda _, target: (_, target > 5))
 
     ds = ds.cache()
     ds = ds.shuffle(128)
