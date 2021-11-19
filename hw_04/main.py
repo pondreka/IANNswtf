@@ -2,7 +2,7 @@
 import tensorflow as tf
 from custom_model import CustomModel
 from dropout_model import DropoutModel
-from hw_04.data_preparation import dataset_generation, prepare_dataframe, normalized_dataset_generation
+from data_preparation import dataset_generation, prepare_dataframe, normalized_dataset_generation
 from training_and_test import test, train_step
 import matplotlib.pyplot as plt
 import os
@@ -14,10 +14,11 @@ def main():
     train_df, valid_df, test_df = prepare_dataframe(csv_name="winequality-red.csv")
 
     train_ds = dataset_generation(train_df)
-    train_ds_2 = normalized_dataset_generation(train_df)
     valid_ds = dataset_generation(valid_df)
-    valid_ds_2 = normalized_dataset_generation(valid_df)
     test_ds = dataset_generation(test_df)
+
+    train_ds_2 = normalized_dataset_generation(train_df)
+    valid_ds_2 = normalized_dataset_generation(valid_df)
     test_ds_2 = normalized_dataset_generation(test_df)
 
     # --------- task 2 "Model" ----------
@@ -25,38 +26,96 @@ def main():
     dropout_model = DropoutModel()
 
     # --------- task 3 "Training" ---------
-    num_epochs = 10
+    num_epochs = 5
     learning_rate = 0.001
 
     binary_loss = tf.keras.losses.BinaryCrossentropy()
-    optimizer = tf.keras.optimizers.SGD(learning_rate)
+    sgd_optimizer = tf.keras.optimizers.SGD(learning_rate)
 
+    train1, valid1, test1 = training(model=model,
+                                     loss=binary_loss,
+                                     num_epochs=num_epochs,
+                                     optimizer=sgd_optimizer,
+                                     train_ds=train_ds,
+                                     valid_ds=valid_ds,
+                                     test_ds=test_ds)
+
+    # ------------ task 4 "Fine-Tuning" --------------
+    adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
+
+    train2, valid2, test2 = training(model=dropout_model,
+                                     loss=binary_loss,
+                                     num_epochs=num_epochs,
+                                     optimizer=adam_optimizer,
+                                     train_ds=train_ds_2,
+                                     valid_ds=valid_ds_2,
+                                     test_ds=test_ds_2)
+
+    adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
+
+    train3, valid3, test3 = training(model=dropout_model,
+                                     loss=binary_loss,
+                                     num_epochs=num_epochs,
+                                     optimizer=adam_optimizer,
+                                     train_ds=train_ds,
+                                     valid_ds=train_ds,
+                                     test_ds=train_ds)
+
+    # ------------ task 5 "Visualization" ---------------
+    # Visualize accuracy and loss for training and test data.
+
+    num_plot_visualization = 3
+    _, axes = plt.subplots(nrows=num_plot_visualization*2, ncols=1, sharex=True, figsize=(9, 6))
+
+    accuracies = 0
+    losses = 1
+
+    index = 0
+    axes, index = prepare_visualization(axes,
+                                 train1[accuracies], train1[losses],
+                                 valid1[accuracies], valid1[losses],
+                                 test1[accuracies], test1[losses],
+                                 index, num_plot_visualization, group_name="Before Refinement")
+
+    axes, index = prepare_visualization(axes,
+                          train2[accuracies], train2[losses],
+                          valid2[accuracies], valid2[losses],
+                          test2[accuracies], test2[losses],
+                          index, num_plot_visualization, group_name="After Refinement (w/ norm)")
+
+    axes, index = prepare_visualization(axes,
+                          train3[accuracies], train3[losses],
+                          valid3[accuracies], valid3[losses],
+                          test3[accuracies], test3[losses],
+                          index, num_plot_visualization, group_name="After Refinement (w/o norm)")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, init_model = None):
+    if init_model is None:
+        init_model = model
     # Prepare some data for the final visualization
     # lists of tensors
     train_losses: list = []
     train_accuracies: list = []
-
     valid_losses: list = []
     valid_accuracies: list = []
-
     test_losses: list = []
     test_accuracies: list = []
-
     # testing train dataset once before we starting the training
-    train_loss, train_accuracy = test(model, train_ds, binary_loss)
+    train_loss, train_accuracy = test(init_model, train_ds, loss)
     train_losses.append(train_loss)
     train_accuracies.append(train_accuracy)
-
     # testing valid dataset once before we starting the training
-    valid_loss, valid_accuracy = test(model, valid_ds, binary_loss)
+    valid_loss, valid_accuracy = test(init_model, valid_ds, loss)
     valid_losses.append(valid_loss)
     valid_accuracies.append(valid_accuracy)
-
     # testing test dataset once before we starting the training
-    test_loss, test_accuracy = test(model, test_ds, binary_loss)
+    test_loss, test_accuracy = test(init_model, test_ds, loss)
     test_losses.append(test_loss)
     test_accuracies.append(test_accuracy)
-
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
         print(
@@ -70,7 +129,7 @@ def main():
         epoch_accuracy_agg = []
         for input, target in train_ds:
             train_loss, train_accuracy = train_step(
-                model, input, target, binary_loss, optimizer
+                model, input, target, loss, optimizer
             )
             epoch_loss_agg.append(train_loss)
             epoch_accuracy_agg.append(train_accuracy)
@@ -80,104 +139,37 @@ def main():
         train_accuracies.append(tf.reduce_mean(epoch_accuracy_agg))
 
         # testing, so we can track valid accuracy and valid loss
-        valid_loss, valid_accuracy = test(model, valid_ds, binary_loss)
+        valid_loss, valid_accuracy = test(model, valid_ds, loss)
         valid_losses.append(valid_loss)
         valid_accuracies.append(valid_accuracy)
 
-        test_loss, test_accuracy = test(model, test_ds, binary_loss)
+        test_loss, test_accuracy = test(model, test_ds, loss)
         test_losses.append(test_loss)
         test_accuracies.append(test_accuracy)
 
-    # ------------ task 4 "Fine-Tuning" --------------
-    adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
-
-    # Prepare some data for the final visualization
-    # lists of tensors
-    train_losses_2: list = []
-    train_accuracies_2: list = []
-
-    valid_losses_2: list = []
-    valid_accuracies_2: list = []
-
-    test_losses_2: list = []
-    test_accuracies_2: list = []
+    return (train_accuracies, train_losses), (valid_accuracies, valid_losses), (test_accuracies, test_losses)
 
 
-    train_loss, train_accuracy = test(model, train_ds_2, binary_loss)
-    train_losses_2.append(train_loss)
-    train_accuracies_2.append(train_accuracy)
+def prepare_visualization(axes, train_accuracies, train_losses, valid_accuracies, valid_losses,
+                          test_accuracies, test_losses, index, num_plot, group_name):
 
-    valid_loss, valid_accuracy = test(model, valid_ds_2, binary_loss)
-    valid_losses_2.append(valid_loss)
-    valid_accuracies_2.append(valid_accuracy)
+    if index > num_plot * 2 - 1:
+        print("Warning: Not enough plots per visualization defined!")
+        return axes, index
 
-    # testing all data once before we begin
-    test_loss, test_accuracy = test(model, test_ds_2, binary_loss)
-    test_losses_2.append(test_loss)
-    test_accuracies_2.append(test_accuracy)
+    axes[index].plot(train_losses, label="train loss")
+    axes[index].plot(valid_losses, label="valid loss")
+    axes[index].plot(test_losses, label="test loss")
+    axes[index].set(ylabel="Loss", title=f"{group_name}")
+    axes[index].legend(loc="upper right")
 
-
-
-    # We train for num_epochs epochs.
-    for epoch in range(num_epochs):
-        print(
-            f"\nEpoch {epoch}: Train accuracy:\t{train_accuracies_2[-1]}"
-            f"\n\t\t Valid accuracy:\t{valid_accuracies_2[-1]}"
-            f"\n\t\t Test accuracy:\t\t{test_accuracies_2[-1]}"
-        )
-
-        # training (and checking in with training)
-        epoch_loss_agg = []
-        epoch_accuracy_agg = []
-        for input, target in train_ds_2:
-            train_loss, train_accuracy = train_step(
-                dropout_model, input, target, binary_loss, adam_optimizer
-            )
-            epoch_loss_agg.append(train_loss)
-            epoch_accuracy_agg.append(train_accuracy)
-
-        # track training loss
-        train_losses_2.append(tf.reduce_mean(epoch_loss_agg))
-        train_accuracies_2.append(tf.reduce_mean(epoch_accuracy_agg))
-
-        # testing, so we can track valid accuracy and valid loss
-        valid_loss, valid_accuracy = test(dropout_model, valid_ds_2, binary_loss)
-        valid_losses_2.append(valid_loss)
-        valid_accuracies_2.append(valid_accuracy)
-
-        test_loss, test_accuracy = test(dropout_model, test_ds_2, binary_loss)
-        test_losses_2.append(test_loss)
-        test_accuracies_2.append(test_accuracy)
-
-    # ------------ task 5 "Visualization" ---------------
-    # Visualize accuracy and loss for training and test data.
-
-    fig, axes = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(9, 6))
-
-    axes[0].plot(train_losses, label="train loss")
-    axes[2].plot(train_accuracies, label="train accuracy")
-    axes[0].plot(valid_losses, label="valid loss")
-    axes[2].plot(valid_accuracies, label="valid accuracy")
-    axes[0].plot(test_losses, label="test loss")
-    axes[2].plot(test_accuracies, label="test accuracy")
-    axes[0].set(ylabel="Loss", title="Loss Before Refinement")
-    axes[0].legend(loc="upper right")
-    axes[2].set(ylabel="Accuracy", title="Accuracy Before Refinement")
-    axes[2].legend(loc="upper right")
-
-    axes[1].plot(train_losses_2, label="train loss")
-    axes[3].plot(train_accuracies_2, label="train accuracy")
-    axes[1].plot(valid_losses_2, label="valid loss")
-    axes[3].plot(valid_accuracies_2, label="valid accuracy")
-    axes[1].plot(test_losses_2, label="test loss")
-    axes[3].plot(test_accuracies_2, label="test accuracy")
-    axes[1].set(ylabel="Loss", title="Loss After Refinement")
-    axes[1].legend(loc="upper right")
-    axes[3].set(ylabel="Accuracy", title="Accuracy After Refinement")
-    axes[3].legend(loc="upper right")
-
-    plt.tight_layout()
-    plt.show()
+    axes[index+1].plot(train_accuracies, label="train accuracy")
+    axes[index+1].plot(valid_accuracies, label="valid accuracy")
+    axes[index+1].plot(test_accuracies, label="test accuracy")
+    axes[index+1].set(ylabel="Accuracy")
+    axes[index+1].legend(loc="upper right")
+    index += 2
+    return axes, index
 
 
 if __name__ == "__main__":
