@@ -26,7 +26,7 @@ def main():
     dropout_model = DropoutModel()
 
     # --------- task 3 "Training" ---------
-    num_epochs = 5
+    num_epochs = 10
     learning_rate = 0.001
 
     binary_loss = tf.keras.losses.BinaryCrossentropy()
