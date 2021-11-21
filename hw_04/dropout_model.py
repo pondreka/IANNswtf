@@ -1,14 +1,14 @@
-
 import tensorflow as tf
 
 
 # ---------- task 2 "Model" -----------
 
+
 class CustomLayer(tf.keras.layers.Layer):
-    """A custom dense layer """
+    """A custom dense layer"""
 
     def __init__(self, units: int, activation=tf.nn.sigmoid):
-        """ Constructor
+        """Constructor
 
         :param units: Input units.
         :param activation: Activation function used in the forward pass.
@@ -18,7 +18,7 @@ class CustomLayer(tf.keras.layers.Layer):
         self.activation = activation
 
     def build(self, input_shape: tf.TensorShape) -> None:
-        """ Instantiation of weights and bias
+        """Instantiation of weights and bias
 
         :param input_shape: shape for weights and bias creation.
         """
@@ -26,7 +26,7 @@ class CustomLayer(tf.keras.layers.Layer):
             shape=(input_shape[-1], self.units),
             initializer="random_normal",
             trainable=True,
-            regularizer=tf.keras.regularizers.L1L2()
+            regularizer=tf.keras.regularizers.L1L2(),
         )
         self.b = self.add_weight(
             shape=(self.units,),
@@ -36,7 +36,7 @@ class CustomLayer(tf.keras.layers.Layer):
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        """ Forward propagation
+        """Forward propagation
 
         :param inputs: Inputs from layer.
         """
@@ -45,10 +45,10 @@ class CustomLayer(tf.keras.layers.Layer):
 
 
 class DropoutModel(tf.keras.Model):
-    """ Definition of a custom Dropput Model """
+    """Definition of a custom Dropput Model"""
 
     def __init__(self, rate=0.1):
-        """ Constructor """
+        """Constructor"""
         super(DropoutModel, self).__init__()
         self.hidden_layer1 = CustomLayer(units=64)
         self.dropout_layer = tf.keras.layers.Dropout(rate=rate)
@@ -58,7 +58,7 @@ class DropoutModel(tf.keras.Model):
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        """ Model's forward pass through instantiated layers
+        """Model's forward pass through instantiated layers
 
         :param inputs: inputs to feed the model
         """

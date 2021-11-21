@@ -25,5 +25,3 @@ def data_generator(labels: np.array) -> np.array:
     while True:
         rand = np.random.randint(0, len(inputs))
         yield np.array([inputs[rand, 0], inputs[rand, 1], labels[rand]])
-
-

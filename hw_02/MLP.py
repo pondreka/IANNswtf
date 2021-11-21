@@ -9,6 +9,7 @@ class MLP:
 
     Specific for classifying inputs for logic gates.
     """
+
     def __init__(self):
         self.hidden_layer = []
         # only 4 neurons needed in the hidden layer
@@ -48,6 +49,9 @@ class MLP:
 
         # update hidden layer perceptrons
         for i in range(len(self.hidden_layer)):
-            delta = e * self.output_perceptron.inputs[i] * (1 - self.output_perceptron.inputs[i])
+            delta = (
+                e
+                * self.output_perceptron.inputs[i]
+                * (1 - self.output_perceptron.inputs[i])
+            )
             self.hidden_layer[i].update(delta)
-

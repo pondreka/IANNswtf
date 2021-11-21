@@ -5,6 +5,7 @@ from Sigmoid import sigmoid
 # ------------- task 3 "Perceptron" -------------
 class Perceptron:
     """Instance representation of a single perceptron."""
+
     def __init__(self, input_units: int):
         # create weights for incoming input_units
         self.weights = np.random.randn(input_units)

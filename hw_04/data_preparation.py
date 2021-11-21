@@ -1,11 +1,10 @@
-
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 
 
 def prepare_dataframe(csv_name: str) -> tuple:
-    """ Load the provided CSV file ans split the dataframe into train, valid and test.
+    """Load the provided CSV file ans split the dataframe into train, valid and test.
 
     :param csv_name: CSV file name to load
     """
@@ -23,7 +22,7 @@ def prepare_dataframe(csv_name: str) -> tuple:
 
 
 def dataset_generation(dataframe, batch_size: int = 32):
-    """ Build a Tensorflow dataset from the dataframes and define pipelines
+    """Build a Tensorflow dataset from the dataframes and define pipelines
 
     :param dataframe: data for the dataset preparation
     :param batch_size: the batching size
@@ -45,7 +44,7 @@ def dataset_generation(dataframe, batch_size: int = 32):
 
 
 def normalized_dataset_generation(dataframe, batch_size: int = 32):
-    """ Build a Tensorflow dataset from the dataframes and apply pipelines
+    """Build a Tensorflow dataset from the dataframes and apply pipelines
 
     :param dataframe: data for the dataset preparation
     :param batch_size: the batching size
@@ -67,5 +66,3 @@ def normalized_dataset_generation(dataframe, batch_size: int = 32):
     ds = ds.prefetch(32)
 
     return ds
-
-

@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 import numpy as np
 
@@ -6,12 +5,13 @@ import numpy as np
 # Definition of all the necessary functions for training
 
 
-def train_step(model: tf.keras.Model,
-               data: tf.Tensor,
-               target: tf.Tensor,
-               loss_function: tf.keras.losses,
-               optimizer: tf.keras.optimizers
-               ) -> (tf.Tensor, float):
+def train_step(
+    model: tf.keras.Model,
+    data: tf.Tensor,
+    target: tf.Tensor,
+    loss_function: tf.keras.losses,
+    optimizer: tf.keras.optimizers,
+) -> (tf.Tensor, float):
     """
     Training iteration over one input data
 
@@ -35,10 +35,9 @@ def train_step(model: tf.keras.Model,
     return loss, accuracy
 
 
-def test(model: tf.keras.Model,
-         test_data,
-         loss_function: tf.keras.losses
-         ) -> (tf.Tensor, float):
+def test(
+    model: tf.keras.Model, test_data, loss_function: tf.keras.losses
+) -> (tf.Tensor, float):
     """
     Test iteration over all test data
 

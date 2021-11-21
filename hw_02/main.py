@@ -1,6 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from Dataset import data_generator, outputs_AND, outputs_OR, outputs_NAND, outputs_NOR, outputs_XOR
+from Dataset import (
+    data_generator,
+    outputs_AND,
+    outputs_OR,
+    outputs_NAND,
+    outputs_NOR,
+    outputs_XOR,
+)
 from MLP import MLP
 
 DATASET_SIZE = 100
@@ -39,7 +46,7 @@ def main():
 
             # counting for correct labeling
             if (target == 1 and mlp.output > 0.5) ^ (
-                    target == 0 and mlp.output <= 0.5
+                target == 0 and mlp.output <= 0.5
             ):
                 correct += 1
 

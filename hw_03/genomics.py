@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 def one_hot_converter(tensor):
-    """ Casts the given string-tensor to a one-hot-vector """
+    """Casts the given string-tensor to a one-hot-vector"""
     vocab = {"A": "1", "C": "2", "G": "3", "T": "0"}
     for key in vocab.keys():
         tensor = tf.strings.regex_replace(tensor, key, vocab[key])
@@ -70,7 +70,9 @@ class CustomLayer(tf.keras.layers.Layer):
             trainable=True,
         )
         self.b = self.add_weight(
-            shape=(self.units,), initializer="random_normal", trainable=True,
+            shape=(self.units,),
+            initializer="random_normal",
+            trainable=True,
         )
 
     @tf.function
@@ -103,7 +105,7 @@ class CustomModel(tf.keras.Model):
 
 
 def train_step(model, input, target, loss_function, optimizer):
-    """ training iteration over one input"""
+    """training iteration over one input"""
     # loss object and optimizer object are instances of respective
     # tensorflow classes
     with tf.GradientTape() as tape:
@@ -119,7 +121,7 @@ def train_step(model, input, target, loss_function, optimizer):
 
 
 def test(model, test_data, loss_function):
-    """ test iteration over complete test data """
+    """test iteration over complete test data"""
     test_accuracy_aggregator = []
     test_loss_aggregator = []
     for (input, target) in test_data:
