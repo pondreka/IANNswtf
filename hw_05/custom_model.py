@@ -10,8 +10,9 @@ class CustomLayer(tf.keras.layers.Layer):
     def __init__(self, units: int, activation=tf.nn.sigmoid):
         """Constructor
 
-        :param units: Input units.
-        :param activation: Activation function used in the forward pass.
+        Args:
+          units: Input units.
+          activation: Activation function used in the forward pass.
         """
         super(CustomLayer, self).__init__()
         self.units = units
@@ -20,9 +21,9 @@ class CustomLayer(tf.keras.layers.Layer):
     def build(self, input_shape: tf.TensorShape) -> None:
         """Instantiation of weights and bias
 
-        :param input_shape: shape for weights and bias creation.
+        Args:
+          input_shape: shape for weights and bias creation.
         """
-
         self.w = self.add_weight(
             shape=(input_shape[-1], self.units),
             initializer="random_normal",
@@ -38,7 +39,8 @@ class CustomLayer(tf.keras.layers.Layer):
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         """Forward propagation
 
-        :param inputs: Inputs from layer.
+        Args:
+           inputs: Inputs from layer.
         """
         incoming_inputs = tf.matmul(inputs, self.w) + self.b
         return self.activation(incoming_inputs)
@@ -58,8 +60,61 @@ class CustomModel(tf.keras.Model):
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         """Model's forward pass through instantiated layers
 
-        :param inputs: inputs to feed the model
+        Args:
+           inputs: inputs to feed the model
         """
+
         output_of_hl_1 = self.hidden_layer1(inputs)
         output_of_hl_2 = self.hidden_layer2(output_of_hl_1)
         return self.output_layer(output_of_hl_2)
+
+
+class ConvModel(tf.keras.Model):
+    """Custom Model with convolutional and pooling layers."""
+
+    def __init__(self, input_shape):
+        """Constructor"""
+        super(ConvModel, self).__init__()
+
+        # TODO: Adjust the proper parameters for each layer
+        self.conv_layer_1 = tf.keras.layers.Conv2D(
+            filters=128,
+            kernel_size=input_shape,
+            strides=(1, 1),
+            padding="valid",
+        )
+        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
+            strides=2, padding="valid"
+        )
+        self.conv_layer_2 = tf.keras.layers.Conv2D(
+            filters=64,
+            strides=(1, 1),
+            padding="valid",
+        )
+        self.pooling_layer_2 = tf.keras.layers.MaxPooling2D(
+            strides=2, padding="valid"
+        )
+
+        self.conv_layer_2 = tf.keras.layers.Conv2D(
+            filters=32,
+            strides=(1, 1),
+            padding="valid",
+        )
+
+    @tf.function
+    def call(self, inputs: tf.Tensor) -> tf.Tensor:
+        """Model's forward pass through instantiated layers
+
+        Args:
+           inputs: inputs to feed the model
+        """
+
+        output_of_conv_1 = self.conv_layer_1(inputs)
+        output_of_pool_1 = self.pooling_layer_1(output_of_conv_1)
+        output_of_conv_2 = self.conv_layer_2(output_of_pool_1)
+        output_of_pool_2 = self.pooling_layer_1(output_of_conv_2)
+        output_of_conv_3 = self.conv_layer_3(output_of_pool_2)
+
+        # TODO: Classifier architecture below
+
+        return self.output_layer(output_of_conv_3)
