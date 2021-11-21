@@ -64,6 +64,6 @@ class DropoutModel(tf.keras.Model):
         """
         output_of_hl_1 = self.hidden_layer1(inputs)
         # Dropout between the hidden layers
-        output_of_dl_1 = self.dropout_layer(output_of_hl_1)
+        output_of_dl_1 = self.dropout_layer(output_of_hl_1, training=True)
         output_of_hl_2 = self.hidden_layer2(output_of_dl_1)
         return self.output_layer(output_of_hl_2)

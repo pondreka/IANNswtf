@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 from custom_model import CustomModel
 from dropout_model import DropoutModel
@@ -6,6 +5,7 @@ from data_preparation import dataset_generation, prepare_dataframe, normalized_d
 from training_and_test import test, train_step
 import matplotlib.pyplot as plt
 import os
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
@@ -13,81 +13,92 @@ def main():
     # ------------ task 1 "Data set" -------------
     train_df, valid_df, test_df = prepare_dataframe(csv_name="winequality-red.csv")
 
-    train_ds = dataset_generation(train_df)
-    valid_ds = dataset_generation(valid_df)
-    test_ds = dataset_generation(test_df)
+    batch_size = 64
 
-    train_ds_2 = normalized_dataset_generation(train_df)
-    valid_ds_2 = normalized_dataset_generation(valid_df)
-    test_ds_2 = normalized_dataset_generation(test_df)
+    train_ds = dataset_generation(train_df, batch_size=batch_size)
+    valid_ds = dataset_generation(valid_df, batch_size=batch_size)
+    test_ds = dataset_generation(test_df, batch_size=batch_size)
+
+    train_ds_norm = normalized_dataset_generation(train_df, batch_size=batch_size)
+    valid_ds_norm = normalized_dataset_generation(valid_df, batch_size=batch_size)
+    test_ds_norm = normalized_dataset_generation(test_df, batch_size=batch_size)
 
     # --------- task 2 "Model" ----------
     model = CustomModel()
-    dropout_model = DropoutModel()
+    dropout_rate = .8
+    dropout_model = DropoutModel(rate=dropout_rate)
+    dropout_rate_norm = .8
+    dropout_model_norm = DropoutModel(rate=dropout_rate_norm)
 
     # --------- task 3 "Training" ---------
-    num_epochs = 10
-    learning_rate = 0.001
+    num_epochs = 100
+    learning_rate = 0.0025
 
     binary_loss = tf.keras.losses.BinaryCrossentropy()
     sgd_optimizer = tf.keras.optimizers.SGD(learning_rate)
 
-    train1, valid1, test1 = training(model=model,
-                                     loss=binary_loss,
-                                     num_epochs=num_epochs,
-                                     optimizer=sgd_optimizer,
-                                     train_ds=train_ds,
-                                     valid_ds=valid_ds,
-                                     test_ds=test_ds)
+    train_pre, valid_pre, test_pre = training(model=model,
+                                              loss=binary_loss,
+                                              num_epochs=num_epochs,
+                                              optimizer=sgd_optimizer,
+                                              train_ds=train_ds,
+                                              valid_ds=valid_ds,
+                                              test_ds=test_ds)
 
     # ------------ task 4 "Fine-Tuning" --------------
+    # Train 2 models for comparison
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    train2, valid2, test2 = training(model=dropout_model,
-                                     loss=binary_loss,
-                                     num_epochs=num_epochs,
-                                     optimizer=adam_optimizer,
-                                     train_ds=train_ds_2,
-                                     valid_ds=valid_ds_2,
-                                     test_ds=test_ds_2)
+    train, valid, test = training(model=dropout_model,
+                                  loss=binary_loss,
+                                  num_epochs=num_epochs,
+                                  optimizer=adam_optimizer,
+                                  train_ds=train_ds,
+                                  valid_ds=valid_ds,
+                                  test_ds=test_ds)
 
-    adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
-
-    train3, valid3, test3 = training(model=dropout_model,
-                                     loss=binary_loss,
-                                     num_epochs=num_epochs,
-                                     optimizer=adam_optimizer,
-                                     train_ds=train_ds,
-                                     valid_ds=valid_ds,
-                                     test_ds=test_ds)
+    train_norm, valid_norm, test_norm = training(model=dropout_model_norm,
+                                                 loss=binary_loss,
+                                                 num_epochs=num_epochs,
+                                                 optimizer=adam_optimizer,
+                                                 train_ds=train_ds_norm,
+                                                 valid_ds=valid_ds_norm,
+                                                 test_ds=test_ds_norm)
 
     # ------------ task 5 "Visualization" ---------------
     # Visualize accuracy and loss for training and test data.
 
     num_plot_visualization = 3
-    _, axes = plt.subplots(nrows=num_plot_visualization*2, ncols=1, sharex=True, figsize=(9, 6))
+    _, axes = plt.subplots(nrows=num_plot_visualization * 2, ncols=1, sharex=True, figsize=(9, 6))
 
     accuracies = 0
     losses = 1
 
     index = 0
-    axes, index = prepare_visualization(axes,
-                                 train1[accuracies], train1[losses],
-                                 valid1[accuracies], valid1[losses],
-                                 test1[accuracies], test1[losses],
-                                 index, num_plot_visualization, group_name="Before Refinement")
 
     axes, index = prepare_visualization(axes,
-                          train2[accuracies], train2[losses],
-                          valid2[accuracies], valid2[losses],
-                          test2[accuracies], test2[losses],
-                          index, num_plot_visualization, group_name="After Refinement (w/ norm)")
+                                        train_pre[accuracies], train_pre[losses],
+                                        valid_pre[accuracies], valid_pre[losses],
+                                        test_pre[accuracies], test_pre[losses],
+                                        index, num_plot_visualization,
+                                        group_name=f"Pre-optimized: epochs={num_epochs}, lr={learning_rate}, "
+                                                   f"batch={batch_size}")
 
     axes, index = prepare_visualization(axes,
-                          train3[accuracies], train3[losses],
-                          valid3[accuracies], valid3[losses],
-                          test3[accuracies], test3[losses],
-                          index, num_plot_visualization, group_name="After Refinement (w/o norm)")
+                                        train[accuracies], train[losses],
+                                        valid[accuracies], valid[losses],
+                                        test[accuracies], test[losses],
+                                        index, num_plot_visualization,
+                                        group_name=f"Optimized: epochs={num_epochs}, lr={learning_rate}, "
+                                                   f"batch={batch_size}, dropout_rate={dropout_rate}")
+
+    axes, index = prepare_visualization(axes,
+                                        train_norm[accuracies], train_norm[losses],
+                                        valid_norm[accuracies], valid_norm[losses],
+                                        test_norm[accuracies], test_norm[losses],
+                                        index, num_plot_visualization,
+                                        group_name=f"Optimized (norm): epochs={num_epochs}, lr={learning_rate}, "
+                                                   f"batch={batch_size}, dropout_rate={dropout_rate_norm}")
 
     plt.tight_layout()
     plt.show()
@@ -103,6 +114,7 @@ def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, in
     :param train_ds:  training dataset
     :param valid_ds:  validation data set
     :param test_ds:  testing data set
+    :param init_model:  model to use for the initial testing before the training iterations
     """
 
     if init_model is None:

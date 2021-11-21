@@ -33,7 +33,7 @@ def dataset_generation(dataframe, batch_size: int = 32):
 
     ds = tf.data.Dataset.from_tensor_slices((df, labels))
 
-    # create a binary target
+    # create a binary target (make_binary)
     ds = ds.map(lambda _, target: (_, target > 5))
 
     ds = ds.cache()
