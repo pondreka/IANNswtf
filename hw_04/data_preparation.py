@@ -23,8 +23,7 @@ def prepare_dataframe(csv_name: str) -> tuple:
 
 
 def dataset_generation(dataframe, batch_size: int = 32):
-    """
-    Build a Tensorflow dataset from the dataframes and define pipelines
+    """ Build a Tensorflow dataset from the dataframes and define pipelines
 
     :param dataframe: data for the dataset preparation
     :param batch_size: the batching size
@@ -46,8 +45,7 @@ def dataset_generation(dataframe, batch_size: int = 32):
 
 
 def normalized_dataset_generation(dataframe, batch_size: int = 32):
-    """
-    Build a Tensorflow dataset from the dataframes and apply pipelines
+    """ Build a Tensorflow dataset from the dataframes and apply pipelines
 
     :param dataframe: data for the dataset preparation
     :param batch_size: the batching size

@@ -9,8 +9,7 @@ class CustomLayer(tf.keras.layers.Layer):
     """ A custom dense layer """
 
     def __init__(self, units: int, activation=tf.nn.sigmoid):
-        """
-        Constructor
+        """ Constructor
 
         :param units: Input units.
         :param activation: Activation function used in the forward pass.
@@ -20,8 +19,7 @@ class CustomLayer(tf.keras.layers.Layer):
         self.activation = activation
 
     def build(self, input_shape: tf.TensorShape) -> None:
-        """
-        Instantiation of weights and bias
+        """ Instantiation of weights and bias
 
         :param input_shape: shape for weights and bias creation.
         """
@@ -39,8 +37,7 @@ class CustomLayer(tf.keras.layers.Layer):
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        """
-        Forward propagation
+        """ Forward propagation
 
         :param inputs: Inputs from layer.
         """
@@ -49,8 +46,7 @@ class CustomLayer(tf.keras.layers.Layer):
 
 
 class CustomModel(tf.keras.Model):
-    """
-    Definition of a custom Model definition """
+    """ Definition of a custom Model definition """
 
     def __init__(self):
         """ Constructor """
@@ -61,8 +57,7 @@ class CustomModel(tf.keras.Model):
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        """
-        Model's forward pass through instantiated layers
+        """ Model's forward pass through instantiated layers
 
         :param inputs: inputs to feed the model
         """

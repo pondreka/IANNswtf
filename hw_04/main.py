@@ -93,7 +93,18 @@ def main():
     plt.show()
 
 
-def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, init_model = None):
+def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, init_model=None):
+    """ Train the mode for the number of epochs specified.
+
+    :param model: model to train.
+    :param loss: loss function used for the training and test the model.
+    :param num_epochs: number of iterations for the training.
+    :param optimizer:  Optimizer for the train step.
+    :param train_ds:  training dataset
+    :param valid_ds:  validation data set
+    :param test_ds:  testing data set
+    """
+
     if init_model is None:
         init_model = model
     # Prepare some data for the final visualization
@@ -127,9 +138,9 @@ def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, in
         # training (and checking in with training)
         epoch_loss_agg = []
         epoch_accuracy_agg = []
-        for input, target in train_ds:
+        for inp, target in train_ds:
             train_loss, train_accuracy = train_step(
-                model, input, target, loss, optimizer
+                model, inp, target, loss, optimizer
             )
             epoch_loss_agg.append(train_loss)
             epoch_accuracy_agg.append(train_accuracy)
@@ -152,6 +163,19 @@ def training(model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds, in
 
 def prepare_visualization(axes, train_accuracies, train_losses, valid_accuracies, valid_losses,
                           test_accuracies, test_losses, index, num_plot, group_name):
+    """ Prepares the visualization on 2 plots, loss and accuracy, for a single group.
+
+    :param axes: axis where to include the passed data to plot
+    :param train_accuracies: all the collected training accuracies
+    :param train_losses: all the collected training losses
+    :param valid_accuracies: all the collected validation accuracies
+    :param valid_losses: all the collected validation losses
+    :param test_accuracies: all the collected testing accuracies
+    :param test_losses: all the collected testing losses
+    :param index: keeps track of the total plots to include outside of this specific preparation
+    :param num_plot: total number of plots specified to do not try to plot nonexistent plots
+    :param group_name: Name to be displayed on the top of the group plots.
+    """
 
     if index > num_plot * 2 - 1:
         print("Warning: Not enough plots per visualization defined!")
@@ -163,11 +187,11 @@ def prepare_visualization(axes, train_accuracies, train_losses, valid_accuracies
     axes[index].set(ylabel="Loss", title=f"{group_name}")
     axes[index].legend(loc="upper right")
 
-    axes[index+1].plot(train_accuracies, label="train accuracy")
-    axes[index+1].plot(valid_accuracies, label="valid accuracy")
-    axes[index+1].plot(test_accuracies, label="test accuracy")
-    axes[index+1].set(ylabel="Accuracy")
-    axes[index+1].legend(loc="upper right")
+    axes[index + 1].plot(train_accuracies, label="train accuracy")
+    axes[index + 1].plot(valid_accuracies, label="valid accuracy")
+    axes[index + 1].plot(test_accuracies, label="test accuracy")
+    axes[index + 1].set(ylabel="Accuracy")
+    axes[index + 1].legend(loc="upper right")
     index += 2
     return axes, index
 
