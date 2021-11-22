@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 
-# TODO: Flatten input? No need since we are working with images
 def prepare_f_mnist_data(f_mnist_dataset):
     """Build a tensorflow-dataset from the original data.
 
