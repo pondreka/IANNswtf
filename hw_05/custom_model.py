@@ -78,28 +78,24 @@ class ConvModel(tf.keras.Model):
 
         # TODO: Adjust the proper parameters for each layer
         self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=128,
+            filters=64,
             kernel_size=input_shape,
             strides=(1, 1),
-            padding="valid",
+            padding="valid",  # maybe use "same" instead?
         )
         self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
             strides=2, padding="valid"
         )
         self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=64,
-            strides=(1, 1),
-            padding="valid",
-        )
-        self.pooling_layer_2 = tf.keras.layers.MaxPooling2D(
-            strides=2, padding="valid"
-        )
-
-        self.conv_layer_2 = tf.keras.layers.Conv2D(
             filters=32,
             strides=(1, 1),
             padding="valid",
         )
+        self.pooling_layer_2 = tf.keras.layers.GlobalAveragePooling2D(
+            strides=2, padding="valid"
+        )
+
+        self.output_layer = CustomLayer(units=10, activation=tf.nn.softmax)
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
@@ -112,9 +108,8 @@ class ConvModel(tf.keras.Model):
         output_of_conv_1 = self.conv_layer_1(inputs)
         output_of_pool_1 = self.pooling_layer_1(output_of_conv_1)
         output_of_conv_2 = self.conv_layer_2(output_of_pool_1)
-        output_of_pool_2 = self.pooling_layer_1(output_of_conv_2)
-        output_of_conv_3 = self.conv_layer_3(output_of_pool_2)
-
-        # TODO: Classifier architecture below
-
-        return self.output_layer(output_of_conv_3)
+        output_of_pool_2 = self.pooling_layer_2(output_of_conv_2)
+        flattened_output_of_pool_2 = tf.keras.layers.Flatten()(
+            output_of_pool_2
+        )
+        return self.output_layer(flattened_output_of_pool_2)

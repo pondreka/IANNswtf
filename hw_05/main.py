@@ -6,6 +6,14 @@ import tensorflow_datasets as tfds
 from data_preparation import prepare_f_mnist_data
 
 
+def create_conv_layer(
+    filter_num=64, ker_size=3, stride=(1, 1), pad="same"
+) -> tf.keras.layers.Conv2D:
+    return tf.keras.layers.Conv2D(
+        filters=filter_num, kernel_size=ker_size, strides=stride, padding=pad
+    )
+
+
 def main():
     # -------- task 1 "Data set" ---------
     ds_train_fmnist, ds_test_fmnist = tfds.load(
@@ -66,8 +74,8 @@ def main():
     # process input with conv_layer
     conv_output = conv_layer(input_img)
 
-    # reshape weights from dense layer into shape of conv layer weights such
-    # that we can use the same weights for both
+    # reshape weights from dense layer into shape of conv layer weights
+    # such that we can use the same weights for both
     dense_weights = tf.reshape(
         dense_layer.weights[0], shape=conv_layer.weights[0].shape
     )
@@ -76,22 +84,14 @@ def main():
         dense_layer.weights[1], shape=conv_layer.weights[1].shape
     )
 
-    # assign weights from dense layer to conv layer to show they result in
-    # the same output
+    # assign weights from dense layer to conv layer to show they result
+    # in the same output
     conv_layer.weights[0].assign(dense_weights)
     conv_layer.weights[1].assign(dense_bias)
 
     conv_output = conv_layer(input_img)
 
     conv_output = tf.reshape(conv_output, shape=dense_output.shape)
-
-
-def create_conv_layer(
-    filter_num=64, ker_size=3, stride=(1, 1), pad="same"
-) -> tf.keras.layers.Conv2D:
-    return tf.keras.layers.Conv2D(
-        filters=filter_num, kernel_size=ker_size, strides=stride, padding=pad
-    )
 
 
 if __name__ == "__main__":

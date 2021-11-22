@@ -3,10 +3,10 @@ import tensorflow as tf
 
 # TODO: Flatten input? No need since we are working with images
 def prepare_f_mnist_data(f_mnist_dataset):
-    """Build a tensor flow dataset from the original data.
+    """Build a tensorflow-dataset from the original data.
 
     Args:
-      f_mnist_dataset: Fashion MNIST Dataset.
+      f_mnist_dataset (tensorflow_dataset): Fashion MNIST dataset.
 
     Returns:
       prepared dataset
