@@ -1,10 +1,11 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import numpy as np
+# import numpy as np
 import tensorflow_datasets as tfds
-from train_and_test import train_step, test
+# from train_and_test import train_step, test
 from custom_model import ConvModel
 from data_preparation import prepare_f_mnist_data
+from train_and_visualize import training, prepare_visualization
 
 
 def main():
@@ -31,7 +32,7 @@ def main():
 
     # -------- task 2 "Model" ------------
 
-    model = ConvModel(shape=(28, 28))
+    model = ConvModel(input_shape=(28, 28))
     # TODO: add optimization stuff to model (like DropoutModel)?
     # dropout_rate = 0.1
 
@@ -39,40 +40,50 @@ def main():
 
     num_epochs: int = 10
     learning_rate: float = 0.1
-    
+
     # GOAL: achieve accuracy >= 85% (on test dataset)
     cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
     # opmitizer?
-    sgd_optimizer = tf.keras.optimizaters.SGD(learning_rate)
+    adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    train_pre, valid_pre, test_pre = training(
+    train, valid, test = training(
         model=model,
         loss=cat_cross_ent_loss,
         num_epochs=num_epochs,
-        optimizer=sgd_optimizer,
+        optimizer=adam_optimizer,
         train_ds=train_ds,
         valid_ds=valid_ds,
         test_ds=test_ds,
     )
 
-
     # ---------- task 4 "Visualization" ------------
-    # _, ax = plt.subplot(2, 1, sharex=True, figsize=(9, 6))
-    #
-    # ax[0].plot(train_losses, label="train loss")
-    # ax[0].plot(test_losses, label="test loss")
-    # ax[0].set(ylabel="Loss", title="Loss")
-    # ax[0].legend(loc="upper right")
-    #
-    # ax[1].plot(train_accuracies, label="train accuracy")
-    # ax[1].plot(test_accuracies, label="test accuracy")
-    # ax[1].set(ylabel="Accuracy", title="Accuracy")
-    # ax[1].legend(loc="upper right")
-    #
-    # plt.xlabel("Epochs")
-    # plt.tight_layout()
-    # plt.show()
 
+    num_plot_visualization: int = 1
+    _, axes = plt.subplots(
+        nrows=num_plot_visualization * 2, ncols=1, sharex=True, figsize=(9, 6)
+    )
+    accuracies: int = 0
+    losses: int = 1
+    index: int = 0
+
+    axes, index = prepare_visualization(
+        axes,
+        train[accuracies],
+        train[losses],
+        valid[accuracies],
+        valid[losses],
+        test[accuracies],
+        test[losses],
+        index,
+        num_plot_visualization,
+        group_name=f"epochs={num_epochs} "
+        f"lr={learning_rate}, ",
+        # f"batch={batch_size}, ",
+        # f"dropout_rate={dropout_rate}",
+    )
+
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":

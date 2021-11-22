@@ -81,18 +81,19 @@ class ConvModel(tf.keras.Model):
             filters=64,
             kernel_size=input_shape,
             strides=(1, 1),
-            padding="valid",  # maybe use "same" instead?
+            padding="same",  # maybe use "same" instead, since "valid" makes it weird
         )
         self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
-            strides=2, padding="valid"
+            strides=2, padding="same"
         )
         self.conv_layer_2 = tf.keras.layers.Conv2D(
             filters=32,
+            kernel_size=input_shape,
             strides=(1, 1),
-            padding="valid",
+            padding="same",
         )
-        self.pooling_layer_2 = tf.keras.layers.GlobalAveragePooling2D(
-            strides=2, padding="valid"
+        self.pooling_layer_2 = tf.keras.layers.MaxPooling2D(
+            strides=2, padding="same"
         )
 
         self.output_layer = CustomLayer(units=10, activation=tf.nn.softmax)
