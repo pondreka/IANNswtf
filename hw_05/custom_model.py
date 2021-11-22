@@ -110,7 +110,10 @@ class ConvModel(tf.keras.Model):
         output_of_pool_1 = self.pooling_layer_1(output_of_conv_1)
         output_of_conv_2 = self.conv_layer_2(output_of_pool_1)
         output_of_pool_2 = self.pooling_layer_2(output_of_conv_2)
+        # TODO: find a better way of reshaping
         flattened_output_of_pool_2 = tf.keras.layers.Flatten()(
             output_of_pool_2
         )
+        # This doesn't work:
+        # flattened_output_of_pool_2 = tf.reshape(output_of_pool_2, [-1])
         return self.output_layer(flattened_output_of_pool_2)
