@@ -3,6 +3,7 @@ import tensorflow as tf
 
 # ---------- task 2 "Model" -----------
 
+
 class CustomModel(tf.keras.Model):
     """Custom Model with convolutional and pooling layers."""
 
@@ -29,31 +30,33 @@ class CustomModel(tf.keras.Model):
 class ConvModel(tf.keras.Model):
     """Custom Model with convolutional and pooling layers."""
 
-    def __init__(self, input_shape):
+    def __init__(self):
         """Constructor"""
         super(ConvModel, self).__init__()
 
         # TODO: Adjust the proper parameters for each layer
         self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=64,
-            kernel_size=input_shape,
-            strides=(1, 1),
+            filters=16,
+            kernel_size=(3, 3),
+            activation=tf.keras.activations.relu,
+            input_shape=(28, 28, 1),
             padding="same",  # maybe use "same" instead, since "valid" makes it weird
         )
         self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
-            strides=2, padding="same"
+            padding="same",
         )
         self.conv_layer_2 = tf.keras.layers.Conv2D(
             filters=32,
-            kernel_size=input_shape,
-            strides=(1, 1),
+            kernel_size=(3, 3),
+            activation=tf.keras.activations.relu,
             padding="same",
         )
-        self.pooling_layer_2 = tf.keras.layers.MaxPooling2D(
-            strides=2, padding="same"
+        self.flatten_layer = tf.keras.layers.Flatten()
+        # self.dense_layer1 = tf.keras.layers.Dense(32, activation=tf.keras.activations.relu)
+        self.dropout_layer = tf.keras.layers.Dropout(rate=0.7)
+        self.output_layer = tf.keras.layers.Dense(
+            10, activation=tf.keras.activations.softmax
         )
-
-        self.output_layer = tf.keras.layers.Dense(10, activation=tf.nn.softmax)
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
@@ -66,11 +69,7 @@ class ConvModel(tf.keras.Model):
         output_of_conv_1 = self.conv_layer_1(inputs)
         output_of_pool_1 = self.pooling_layer_1(output_of_conv_1)
         output_of_conv_2 = self.conv_layer_2(output_of_pool_1)
-        output_of_pool_2 = self.pooling_layer_2(output_of_conv_2)
-        # TODO: find a better way of reshaping
-        flattened_output_of_pool_2 = tf.keras.layers.Flatten()(
-            output_of_pool_2
-        )
-        # This doesn't work:
-        # flattened_output_of_pool_2 = tf.reshape(output_of_pool_2, [-1])
-        return self.output_layer(flattened_output_of_pool_2)
+        output_of_flattened = self.flatten_layer(output_of_conv_2)
+        # output_of_dense1 = self.dense_layer1(output_of_flattened)
+        output_of_dropout = self.dropout_layer(output_of_flattened)
+        return self.output_layer(output_of_dropout)
