@@ -12,7 +12,7 @@ class ResidualBlock(tf.keras.layers.Layer):
         self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
 
         self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=3,
+            filters=16,
             kernel_size=(1, 1),
             activation=tf.keras.activations.relu,
             input_shape=(32, 32, 3),
@@ -22,7 +22,7 @@ class ResidualBlock(tf.keras.layers.Layer):
         self.batch_norm_layer_2 = tf.keras.layers.BatchNormalization()
 
         self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=3,
+            filters=16,
             kernel_size=(3, 3),
             activation=tf.keras.activations.relu,
             padding="same",
@@ -31,6 +31,13 @@ class ResidualBlock(tf.keras.layers.Layer):
         self.batch_norm_layer_3 = tf.keras.layers.BatchNormalization()
 
         self.conv_layer_3 = tf.keras.layers.Conv2D(
+            filters=8,
+            kernel_size=(1, 1),
+            activation=tf.keras.activations.relu,
+            padding="same",
+        )
+
+        self.out = tf.keras.layers.Conv2D(
             filters=8,
             kernel_size=(1, 1),
             activation=tf.keras.activations.relu,
@@ -53,7 +60,7 @@ class ResidualBlock(tf.keras.layers.Layer):
             out_6 = self.conv_layer_3(out_5)
             out = tf.keras.layers.Add()([out_6, out_1])
 
-        return out
+        return self.out(out)
 
 
 class ResNet(tf.keras.Model):

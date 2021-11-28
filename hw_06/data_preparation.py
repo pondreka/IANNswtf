@@ -29,6 +29,6 @@ def prepare_data(dataset):
     # shuffle, batch, prefetch
     ds = ds.shuffle(1000)
     ds = ds.batch(1024)
-    ds = ds.prefetch(20)
+    ds = ds.prefetch(2048)
     # return preprocessed dataset
     return ds
