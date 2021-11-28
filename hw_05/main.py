@@ -1,10 +1,7 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-
-# import numpy as np
 import tensorflow_datasets as tfds
 
-# from train_and_test import train_step, test
 from custom_model import ConvModel
 from data_preparation import prepare_f_mnist_data
 from train_and_visualize import training, prepare_visualization
@@ -42,9 +39,8 @@ def main():
     num_epochs: int = 10
     learning_rate: float = 0.01
 
-    # GOAL: achieve accuracy >= 85% (on test dataset)
     cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
-    # optimizer?
+
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     train, valid, test = training(
@@ -77,9 +73,8 @@ def main():
         test[losses],
         index,
         num_plot_visualization,
-        group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
-        # f"batch={batch_size}, ",
-        # f"dropout_rate={dropout_rate}",
+        group_name=f"epochs={num_epochs} " 
+                   f"lr={learning_rate}, "
     )
 
     plt.tight_layout()
