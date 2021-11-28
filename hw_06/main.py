@@ -5,15 +5,18 @@ import matplotlib.pyplot as plt
 import tensorflow_datasets as tfds
 
 # from train_and_test import train_step, test
-from custom_model import ConvModel
-from data_preparation import prepare_f_mnist_data
+from custom_model import *
+from data_preparation import prepare_data
 from train_and_visualize import training, prepare_visualization
+
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
 def main():
     # -------- task 1 "Data set" ---------
-    ds_train_and_valid_fmnist, ds_test_fmnist = tfds.load(
-        "fashion_mnist",
+    ds_train_and_valid, ds_test = tfds.load(
+        "cifar10",
         split=["train", "test"],
         shuffle_files=True,
         as_supervised=True,
@@ -21,21 +24,23 @@ def main():
 
     # -------- task 1.1 "Construct a Data Pipeline" ------------
 
-    overall_total: int = 60000
-    valid_total: int = int(overall_total / 6)  # as many as test
+    overall_total: int = 50000
+    valid_total: int = int(overall_total / 5)  # as many as test
     train_total: int = overall_total - valid_total
     # split the first batch
-    ds_train_fmnist = ds_train_and_valid_fmnist.take(train_total)
-    ds_valid_fmnist = ds_train_and_valid_fmnist.skip(train_total)
+    ds_train = ds_train_and_valid.take(train_total)
+    ds_valid = ds_train_and_valid.skip(train_total)
 
     # massage data
-    train_ds = ds_train_fmnist.apply(prepare_f_mnist_data)
-    valid_ds = ds_valid_fmnist.apply(prepare_f_mnist_data)
-    test_ds = ds_test_fmnist.apply(prepare_f_mnist_data)
+    train_ds = ds_train.apply(prepare_data)
+    valid_ds = ds_valid.apply(prepare_data)
+    test_ds = ds_test.apply(prepare_data)
 
     # -------- task 2 "Model" ------------
+    test = False
 
-    model = ConvModel()
+    res_model = ResNet()
+    dense_model = DenseNet()
 
     # -------- task 3 "Training" ------------
 
@@ -48,7 +53,7 @@ def main():
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     train, valid, test = training(
-        model=model,
+        model=res_model,
         loss=cat_cross_ent_loss,
         num_epochs=num_epochs,
         optimizer=adam_optimizer,
