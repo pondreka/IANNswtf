@@ -50,7 +50,7 @@ class ResidualBlock(tf.keras.layers.Layer):
             out_1 = self.conv_layer_1(inputs)
             out_2 = self.conv_layer_2(out_1)
             out_3 = self.conv_layer_3(out_2)
-            out = tf.keras.layers.Add()([out_3, out_1])
+            out = tf.keras.layers.Add()([out_3, inputs])
         else:
             out_1 = self.batch_norm_layer_1(inputs)
             out_2 = self.conv_layer_1(out_1)
@@ -58,7 +58,7 @@ class ResidualBlock(tf.keras.layers.Layer):
             out_4 = self.conv_layer_2(out_3)
             out_5 = self.batch_norm_layer_3(out_4)
             out_6 = self.conv_layer_3(out_5)
-            out = tf.keras.layers.Add()([out_6, out_1])
+            out = tf.keras.layers.Add()([out_6, inputs])
 
         return self.out(out)
 
