@@ -34,13 +34,12 @@ class ConvModel(tf.keras.Model):
         """Constructor"""
         super(ConvModel, self).__init__()
 
-        # TODO: Adjust the proper parameters for each layer
         self.conv_layer_1 = tf.keras.layers.Conv2D(
             filters=16,
             kernel_size=(3, 3),
             activation=tf.keras.activations.relu,
             input_shape=(28, 28, 1),
-            padding="same",  # maybe use "same" instead, since "valid" makes it weird
+            padding="same",
         )
         self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
             padding="same",
@@ -52,7 +51,6 @@ class ConvModel(tf.keras.Model):
             padding="same",
         )
         self.flatten_layer = tf.keras.layers.Flatten()
-        # self.dense_layer1 = tf.keras.layers.Dense(32, activation=tf.keras.activations.relu)
         self.dropout_layer = tf.keras.layers.Dropout(rate=0.7)
         self.output_layer = tf.keras.layers.Dense(
             10, activation=tf.keras.activations.softmax
@@ -70,6 +68,5 @@ class ConvModel(tf.keras.Model):
         output_of_pool_1 = self.pooling_layer_1(output_of_conv_1)
         output_of_conv_2 = self.conv_layer_2(output_of_pool_1)
         output_of_flattened = self.flatten_layer(output_of_conv_2)
-        # output_of_dense1 = self.dense_layer1(output_of_flattened)
         output_of_dropout = self.dropout_layer(output_of_flattened)
         return self.output_layer(output_of_dropout)
