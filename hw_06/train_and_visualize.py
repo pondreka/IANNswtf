@@ -10,7 +10,6 @@ def training(
     train_ds,
     valid_ds,
     test_ds,
-    init_model=None,
 ):
     """Train the mode for the number of epochs specified.
 
@@ -32,8 +31,6 @@ def training(
             ones represent their respective accuracy and loss.
     """
 
-    if init_model is None:
-        init_model = model
     # Prepare some data for the final visualization
     # lists of tensors
     train_losses: list = []
@@ -43,15 +40,15 @@ def training(
     test_losses: list = []
     test_accuracies: list = []
     # testing train dataset once before we starting the training
-    train_loss, train_accuracy = test(init_model, train_ds, loss)
+    train_loss, train_accuracy = test(model, train_ds, loss)
     train_losses.append(train_loss)
     train_accuracies.append(train_accuracy)
     # testing valid dataset once before we starting the training
-    valid_loss, valid_accuracy = test(init_model, valid_ds, loss)
+    valid_loss, valid_accuracy = test(model, valid_ds, loss)
     valid_losses.append(valid_loss)
     valid_accuracies.append(valid_accuracy)
     # testing test dataset once before we starting the training
-    test_loss, test_accuracy = test(init_model, test_ds, loss)
+    test_loss, test_accuracy = test(model, test_ds, loss)
     test_losses.append(test_loss)
     test_accuracies.append(test_accuracy)
     # We train for num_epochs epochs.

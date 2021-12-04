@@ -111,23 +111,23 @@ class TransitionLayer(tf.keras.layers.Layer):
 
         self.conv_layer_1 = tf.keras.layers.Conv2D(
             filters=8,
+            strides=(2, 2),
             kernel_size=(1, 1),
             activation=tf.keras.activations.relu,
             input_shape=(32, 32, 3),
-            padding="same",
+            padding="valid"  # No padding
         )
 
         self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
 
         self.pooling_layer_1 = tf.keras.layers.AveragePooling2D(
-            strides=(1, 1), padding="same"
+            strides=(2, 2), padding="valid"
         )
 
     # TODO: Growth Rate?
-    def call(self, inputs, test: bool):
+    def call(self, inputs, training: bool):
         out = self.conv_layer_1(inputs)
-        if not test:
-            out = self.batch_norm_layer_1(out)
+        out = self.batch_norm_layer_1(out, training)
         out_2 = self.pooling_layer_1(out)
         return out_2
 
@@ -165,20 +165,14 @@ class DenseBlock(tf.keras.layers.Layer):
         )
 
     @tf.function
-    def call(self, inputs: tf.Tensor, test: bool) -> tf.Tensor:
-        if test:
-            out_1 = self.conv_layer_1(inputs)
-            out_2 = self.conv_layer_2(out_1)
-            out_3 = self.conv_layer_3(out_2)
-            out = tf.keras.layers.Concatenate()([out_3, out_1])
-        else:
-            out_1 = self.batch_norm_layer_1(inputs)
-            out_2 = self.conv_layer_1(out_1)
-            out_3 = self.batch_norm_layer_2(out_2)
-            out_4 = self.conv_layer_2(out_3)
-            out_5 = self.batch_norm_layer_3(out_4)
-            out_6 = self.conv_layer_3(out_5)
-            out = tf.keras.layers.Concatenate()([out_6, out_1])
+    def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
+        out_1 = self.batch_norm_layer_1(inputs, training)
+        out_2 = self.conv_layer_1(out_1)
+        out_3 = self.batch_norm_layer_2(out_2, training)
+        out_4 = self.conv_layer_2(out_3)
+        out_5 = self.batch_norm_layer_3(out_4, training)
+        out_6 = self.conv_layer_3(out_5)
+        out = tf.keras.layers.Concatenate()([out_6, out_1])
 
         return out
 
@@ -211,13 +205,13 @@ class DenseNet(tf.keras.Model):
         )
 
     @tf.function
-    def call(self, inputs: tf.Tensor, test: bool = False) -> tf.Tensor:
+    def call(self, inputs: tf.Tensor, training: bool = False) -> tf.Tensor:
         out_1 = self.conv_layer_1(inputs)
-        out_2 = self.dense_block_1(out_1, test)
-        out_2_1 = self.trans_layer_1(out_2, test)
-        out_3 = self.dense_block_2(out_2_1, test)
-        out_3_1 = self.trans_layer_2(out_3, test)
-        out_4 = self.dense_block_3(out_3_1, test)
+        out_2 = self.dense_block_1(out_1, training)
+        out_2_1 = self.trans_layer_1(out_2, training)
+        out_3 = self.dense_block_2(out_2_1, training)
+        out_3_1 = self.trans_layer_2(out_3, training)
+        out_4 = self.dense_block_3(out_3_1, training)
         out_5 = self.pooling_layer_1(out_4)
         out_6 = self.flatten_layer(out_5)
         out_7 = self.dropout_layer(out_6)

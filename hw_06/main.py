@@ -45,7 +45,7 @@ def main():
     # -------- task 3 "Training" ------------
 
     num_epochs: int = 10
-    learning_rate: float = 0.01
+    learning_rate: float = 0.001
 
     # GOAL: achieve accuracy >= 85% (on test dataset)
     cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
@@ -62,9 +62,19 @@ def main():
         test_ds=test_ds,
     )
 
+    train2, valid2, test2 = training(
+        model=dense_model,
+        loss=cat_cross_ent_loss,
+        num_epochs=num_epochs,
+        optimizer=adam_optimizer,
+        train_ds=train_ds,
+        valid_ds=valid_ds,
+        test_ds=test_ds,
+    )
+
     # ---------- task 4 "Visualization" ------------
 
-    num_plot_visualization: int = 1
+    num_plot_visualization: int = 2
     _, axes = plt.subplots(
         nrows=num_plot_visualization * 2, ncols=1, sharex=True, figsize=(9, 6)
     )
@@ -80,6 +90,21 @@ def main():
         valid[losses],
         test[accuracies],
         test[losses],
+        index,
+        num_plot_visualization,
+        group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
+        # f"batch={batch_size}, ",
+        # f"dropout_rate={dropout_rate}",
+    )
+
+    axes, index = prepare_visualization(
+        axes,
+        train2[accuracies],
+        train2[losses],
+        valid2[accuracies],
+        valid2[losses],
+        test2[accuracies],
+        test2[losses],
         index,
         num_plot_visualization,
         group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
