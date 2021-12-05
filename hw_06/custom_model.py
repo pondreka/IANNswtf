@@ -59,7 +59,7 @@ class ResidualBlock(tf.keras.layers.Layer):
 
         out_conv_layer_3 = self.conv_layer_3(out_activation_3)
 
-        out = tf.keras.layers.Add()([out_conv_layer_3, inputs])
+        out = tf.keras.layers.Add()([inputs, out_conv_layer_3])
 
         return out
 
@@ -72,7 +72,7 @@ class ResNet(tf.keras.Model):
         self.conv_layer = tf.keras.layers.Conv2D(
             filters=32,
             kernel_size=(1, 1),
-            activation=tf.keras.activations.relu,   # TODO: is here really an activation function necessary?
+            activation=tf.keras.activations.relu,
             input_shape=(32, 32, 3),
             padding="same",
         )

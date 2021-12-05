@@ -37,19 +37,16 @@ def main():
     test_ds = ds_test.apply(prepare_data)
 
     # -------- task 2 "Model" ------------
-    test = False
 
     res_model = ResNet()
     dense_model = DenseNet()
 
     # -------- task 3 "Training" ------------
 
-    num_epochs: int = 10
+    num_epochs: int = 30
     learning_rate: float = 0.001
 
-    # GOAL: achieve accuracy >= 85% (on test dataset)
     cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
-    # optimizer?
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     train, valid, test = training(
@@ -73,7 +70,8 @@ def main():
     )
 
     # ---------- task 4 "Visualization" ------------
-
+    res_model.summary()
+    dense_model.summary()
     num_plot_visualization: int = 2
     _, axes = plt.subplots(
         nrows=num_plot_visualization * 2, ncols=1, sharex=True, figsize=(9, 6)
@@ -92,7 +90,7 @@ def main():
         test[losses],
         index,
         num_plot_visualization,
-        group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
+        group_name=f"epochs={num_epochs} lr={learning_rate} | accur.={test[accuracies][-1]}",
         # f"batch={batch_size}, ",
         # f"dropout_rate={dropout_rate}",
     )
@@ -107,7 +105,7 @@ def main():
         test2[losses],
         index,
         num_plot_visualization,
-        group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
+        group_name=f"epochs={num_epochs} lr={learning_rate} | accur.={test2[accuracies][-1]}",
         # f"batch={batch_size}, ",
         # f"dropout_rate={dropout_rate}",
     )
