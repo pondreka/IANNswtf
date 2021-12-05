@@ -5,7 +5,7 @@ import tensorflow as tf
 # ----------- task 2.1 "ResNet" -----------
 
 class ResidualBlock(tf.keras.layers.Layer):
-
+    """ Residual block layer definition """
     def __init__(self):
         super(ResidualBlock, self).__init__()
 
@@ -65,7 +65,11 @@ class ResidualBlock(tf.keras.layers.Layer):
 
 
 class ResNet(tf.keras.Model):
+    """ ResNet model definition
 
+    Args:
+        blocks: number of residual blocks in the model.
+    """
     def __init__(self, blocks: int = 3):
         super(ResNet, self).__init__()
 
@@ -111,7 +115,7 @@ class ResNet(tf.keras.Model):
 
 # ----------- task 2.2 "DenseNet" -----------
 class TransitionLayer(tf.keras.layers.Layer):
-
+    """ Transition layer definition """
     def __init__(self):
         super(TransitionLayer, self).__init__()
 
@@ -140,7 +144,7 @@ class TransitionLayer(tf.keras.layers.Layer):
 
 
 class Block(tf.keras.layers.Layer):
-
+    """ Block layer definition """
     def __init__(self):
         super(Block, self).__init__()
 
@@ -166,7 +170,11 @@ class Block(tf.keras.layers.Layer):
 
 
 class DenseBlock(tf.keras.layers.Layer):
+    """ Dense block layer definition
 
+    Args:
+        blocks: number of blocks in the dense block layer.
+    """
     def __init__(self, blocks: int = 2):
         super(DenseBlock, self).__init__()
 
@@ -187,7 +195,11 @@ class DenseBlock(tf.keras.layers.Layer):
 
 
 class DenseNet(tf.keras.Model):
+    """ DenseNet model definition
 
+    Args:
+        blocks: number of dense blocks in the model.
+    """
     def __init__(self, blocks: int = 2):
         super(DenseNet, self).__init__()
 
