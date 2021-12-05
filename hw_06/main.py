@@ -43,7 +43,7 @@ def main():
 
     # -------- task 3 "Training" ------------
 
-    num_epochs: int = 30
+    num_epochs: int = 3
     learning_rate: float = 0.001
 
     cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
