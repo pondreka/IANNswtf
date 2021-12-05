@@ -55,7 +55,7 @@ def test(
     test_accuracy_aggregator = []
     test_loss_aggregator = []
     for (data, target) in test_data:
-        prediction = model(data)
+        prediction = model(data, False)
         sample_test_loss = loss_function(target, prediction)
         sample_test_accuracy = tf.keras.backend.argmax(
             target, axis=1

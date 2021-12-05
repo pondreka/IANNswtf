@@ -72,12 +72,16 @@ class ResNet(tf.keras.Model):
         self.conv_layer = tf.keras.layers.Conv2D(
             filters=32,
             kernel_size=(1, 1),
-            activation=tf.keras.activations.relu,
             input_shape=(32, 32, 3),
             padding="same",
         )
 
         self.res_blocks = [ResidualBlock() for _ in range(blocks)]
+
+        self.batch_layer = tf.keras.layers.BatchNormalization()
+        self.activation = tf.keras.layers.Activation(
+            activation=tf.keras.activations.relu
+        )
 
         self.pooling_layer = tf.keras.layers.GlobalAveragePooling2D()
         self.flatten_layer = tf.keras.layers.Flatten()
@@ -95,7 +99,9 @@ class ResNet(tf.keras.Model):
         for res_block in self.res_blocks:
             out = res_block(out, training)
 
-        out_pooling = self.pooling_layer(out)
+        out_batch = self.batch_layer(out, training)
+        out_activation = self.activation(out_batch)
+        out_pooling = self.pooling_layer(out_activation)
         out_flatten = self.flatten_layer(out_pooling)
         out_dropout = self.dropout_layer(out_flatten, training)
         output = self.output_layer(out_dropout)
@@ -108,96 +114,111 @@ class TransitionLayer(tf.keras.layers.Layer):
 
     def __init__(self):
         super(TransitionLayer, self).__init__()
-        self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
 
-        self.activation_1 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-        self.conv_layer_1 = tf.keras.layers.Conv2D(
+        self.conv_layer = tf.keras.layers.Conv2D(
             filters=8,
             strides=(2, 2),
             kernel_size=(1, 1),
-            input_shape=(32, 32, 3),
             padding="valid"  # No padding
         )
 
-        self.pooling_layer_1 = tf.keras.layers.AveragePooling2D(
+        self.batch_norm_layer = tf.keras.layers.BatchNormalization()
+        self.activation = tf.keras.layers.Activation(
+            activation=tf.keras.activations.relu
+        )
+
+        self.pooling_layer = tf.keras.layers.AveragePooling2D(
             strides=(2, 2), padding="valid"
         )
 
     # TODO: Growth Rate?
     def call(self, inputs, training: bool):
-        out = self.batch_norm_layer_1(inputs, training)
-        out = self.activation_1(out)
-        out = self.conv_layer_1(out)
-        out = self.pooling_layer_1(out)
-        return out
+        out_conv = self.conv_layer(inputs)
+        out_batch_norm = self.batch_norm_layer(out_conv, training)
+        out_activation = self.activation(out_batch_norm)
+        out_pooling = self.pooling_layer(out_activation)
+        return out_pooling
 
 
-class DenseBlock(tf.keras.layers.Layer):
+class Block(tf.keras.layers.Layer):
 
     def __init__(self):
-        super(DenseBlock, self).__init__()
+        super(Block, self).__init__()
 
-        self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
+        self.batch_norm_layer = tf.keras.layers.BatchNormalization()
 
-        self.activation_1 = tf.keras.layers.Activation(
+        self.activation = tf.keras.layers.Activation(
             activation=tf.keras.activations.relu
         )
 
-        self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(1, 1),
-            activation=tf.keras.activations.relu,
-            padding="valid",
-        )
-
-        self.batch_norm_layer_2 = tf.keras.layers.BatchNormalization()
-
-        self.activation_2 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-
-        self.conv_layer_2 = tf.keras.layers.Conv2D(
+        self.conv_layer = tf.keras.layers.Conv2D(
             filters=8,
             kernel_size=(3, 3),
-            activation=tf.keras.activations.relu,
             padding="same",
         )
 
     @tf.function
     def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
-        out = self.batch_norm_layer_1(inputs, training)
-        out = self.activation_1(out)
-        out = self.conv_layer_1(out)
-        out = self.batch_norm_layer_2(out, training)
-        out = self.activation_2(out)
-        out = self.conv_layer_2(out)
-        out = tf.keras.layers.Concatenate()([inputs, out])
+        out_batch_norm = self.batch_norm_layer_1(inputs, training)
+        out_activation = self.activation_1(out_batch_norm)
+        out_conv = self.conv_layer_1(out_activation)
 
-        return out
+        return out_conv
+
+
+class DenseBlock(tf.keras.layers.Layer):
+
+    def __init__(self, blocks: int = 2):
+        super(DenseBlock, self).__init__()
+
+        self.dense_blocks = [Block() for _ in range(blocks)]
+
+        self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
+
+    @tf.function
+    def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
+        out = inputs
+
+        for dense_block in self.dense_blocks:
+            out = dense_block(out, training)
+
+        out_concatenate = tf.keras.layers.Concatenate()([inputs, out])
+
+        return out_concatenate
 
 
 class DenseNet(tf.keras.Model):
 
-    def __init__(self):
+    def __init__(self, blocks: int = 2):
         super(DenseNet, self).__init__()
 
         self.conv_layer_1 = tf.keras.layers.Conv2D(
             filters=64,
-            kernel_size=(3, 3),
-            activation=tf.keras.activations.relu,
+            kernel_size=(7, 7),
             input_shape=(32, 32, 3),
+            strides=(2, 2),
+            padding="valid",
+        )
+
+        self.batch_layer_1 = tf.keras.layers.BatchNormalization()
+        self.activation_1 = tf.keras.layers.Activation(
+            activation=tf.keras.activations.relu
+        )
+
+        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="valid")
+
+        self.conv_layer_2 = tf.keras.layers.Conv2D(
+            filters=8,
+            kernel_size=(1, 1),
             padding="valid",
         )
 
         self.dense_block_1 = DenseBlock()
-        self.trans_layer_1 = TransitionLayer()
-        self.dense_block_2 = DenseBlock()
-        self.trans_layer_2 = TransitionLayer()
-        self.dense_block_3 = DenseBlock()
 
-        self.pooling_layer_1 = tf.keras.layers.GlobalAveragePooling2D()
+        self.dense_blocks = [DenseBlock() for _ in range(blocks)]           # change number of conv layers here
+        self.trans_layers = [TransitionLayer() for _ in range(blocks)]
+
+        self.pooling_layer_2 = tf.keras.layers.GlobalAveragePooling2D()
 
         self.flatten_layer = tf.keras.layers.Flatten()
         self.dropout_layer = tf.keras.layers.Dropout(rate=0.5)
@@ -205,17 +226,31 @@ class DenseNet(tf.keras.Model):
             10, activation=tf.keras.activations.softmax
         )
 
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool = False) -> tf.Tensor:
-        out = self.conv_layer_1(inputs)
-        out = self.dense_block_1(out, training)
-        out = self.trans_layer_1(out, training)
-        out = self.dense_block_2(out, training)
-        out = self.trans_layer_2(out, training)
-        out = self.dense_block_3(out, training)
-        out = self.pooling_layer_1(out)
-        out = self.flatten_layer(out)
-        out = self.dropout_layer(out)
-        out = self.output_layer(out)
+        self.batch_layer_2 = tf.keras.layers.BatchNormalization()
+        self.activation_2 = tf.keras.layers.Activation(
+            activation=tf.keras.activations.relu
+        )
 
-        return out
+    @tf.function
+    def call(self, inputs: tf.Tensor, training: bool = True) -> tf.Tensor:
+        out_conv_1 = self.conv_layer_1(inputs)
+        out_batch_1 = self.batch_layer_1(out_conv_1, training)
+        out_activation_1 = self.activation_1(out_batch_1)
+        out_pooling_1 = self.pooling_layer_1(out_activation_1)
+        out_conv_2 = self.conv_layer_2(out_pooling_1)
+
+        out = self.dense_block_1(out_conv_2, training)
+
+        for i in range(len(self.dense_blocks)):
+            out = self.trans_layers[i](out, training)
+            out = self.dense_blocks[i](out, training)
+
+        out_batch_2 = self.batch_layer_1(out, training)
+        out_activation_2 = self.activation_1(out_batch_2)
+
+        out_pooling_2 = self.pooling_layer_2(out_activation_2)
+        out_flatten = self.flatten_layer(out_pooling_2)
+        out_dropout = self.dropout_layer(out_flatten, training)
+        out_output = self.output_layer(out_dropout)
+
+        return out_output
