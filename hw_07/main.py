@@ -6,7 +6,7 @@ import tensorflow_datasets as tfds
 
 # from train_and_test import train_step, test
 from custom_model import *
-from data_preparation import prepare_data
+from data_preparation import prepare_data, my_integration_task
 from train_and_visualize import training, prepare_visualization
 
 import os
@@ -15,12 +15,9 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 def main():
     # -------- task 1 "Data set" ---------
-    ds_train_and_valid, ds_test = tfds.load(
-        "cifar10",
-        split=["train", "test"],
-        shuffle_files=True,
-        as_supervised=True,
-    )
+
+    data_set = tf.data.Dataset.from_generator(my_integration_task)
+
 
     # -------- task 1.1 "Construct a Data Pipeline" ------------
 

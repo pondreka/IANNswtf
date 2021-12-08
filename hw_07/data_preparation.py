@@ -36,6 +36,7 @@ def prepare_data(dataset):
 
 # Task 1.2
 
+
 def integration_task(seq_len: int, num_samples: int):
     while True:
         signals = np.random.normal(0, 1, (num_samples, seq_len))
@@ -43,14 +44,17 @@ def integration_task(seq_len: int, num_samples: int):
         output = signals.sum(1) > 0
         output = output.astype(float)
         # TODO: flatten signals?
-        yield (signals, output)
+        yield signals, output
 
 
 def my_integration_task():
     # test:
-    seq_len:int = 10
+    seq_len: int = 10
     # real one though, when we're done
-    # seq_len:int = 69
+    # seq_len: int = 69
+
+    # num_samples: int = 80000
     num_samples: int = 420
+
     while True:
         yield integration_task(seq_len, num_samples)

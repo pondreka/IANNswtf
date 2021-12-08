@@ -2,266 +2,95 @@ import tensorflow as tf
 
 
 # ---------- task 2 "Model" -----------
-# ----------- task 2.1 "ResNet" -----------
-
-class ResidualBlock(tf.keras.layers.Layer):
-    """ Residual block layer definition """
-    def __init__(self):
-        super(ResidualBlock, self).__init__()
-
-        self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
-        self.activation_1 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
 
-        self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(1, 1),
-            padding="same",
-        )
-
-        self.batch_norm_layer_2 = tf.keras.layers.BatchNormalization()
-        self.activation_2 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-
-        self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(3, 3),
-            padding="same",
-        )
-
-        self.batch_norm_layer_3 = tf.keras.layers.BatchNormalization()
-        self.activation_3 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-
-        self.conv_layer_3 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(1, 1),
-            padding="same",
-        )
-
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
-        out_batch_norm_1 = self.batch_norm_layer_1(inputs, training)
-        out_activation_1 = self.activation_1(out_batch_norm_1)
-
-        out_conv_layer_1 = self.conv_layer_1(out_activation_1)
-
-        out_batch_norm_2 = self.batch_norm_layer_2(out_conv_layer_1, training)
-        out_activation_2 = self.activation_2(out_batch_norm_2)
-
-        out_conv_layer_2 = self.conv_layer_2(out_activation_2)
-
-        out_batch_norm_3 = self.batch_norm_layer_3(out_conv_layer_2, training)
-        out_activation_3 = self.activation_3(out_batch_norm_3)
-
-        out_conv_layer_3 = self.conv_layer_3(out_activation_3)
-
-        out = tf.keras.layers.Add()([inputs, out_conv_layer_3])
-
-        return out
-
-
-class ResNet(tf.keras.Model):
-    """ ResNet model definition
-
-    Args:
-        blocks: number of residual blocks in the model.
-    """
-    def __init__(self, blocks: int = 3):
-        super(ResNet, self).__init__()
-
-        self.conv_layer = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(1, 1),
-            input_shape=(32, 32, 3),
-            padding="same",
-        )
-
-        self.res_blocks = [ResidualBlock() for _ in range(blocks)]
-
-        self.batch_layer = tf.keras.layers.BatchNormalization()
-        self.activation = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
+# Wrapper
 
-        self.pooling_layer = tf.keras.layers.GlobalAveragePooling2D()
-        self.flatten_layer = tf.keras.layers.Flatten()
-        self.dropout_layer = tf.keras.layers.Dropout(
-            rate=0.5
-        )
-        self.output_layer = tf.keras.layers.Dense(
-            10, activation=tf.keras.activations.softmax
-        )
+class RNNWrapper(tf.keras.layers.Layer):
+    def __init__(self, RNN_Cell, return_sequences=False):
+        super(RNNWrapper, self).__init__()
 
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool = True) -> tf.Tensor:
-        out = self.conv_layer(inputs)
+        self.return_sequences = return_sequences
 
-        for res_block in self.res_blocks:
-            out = res_block(out, training)
+        self.cell = RNN_Cell
 
-        out_batch = self.batch_layer(out, training)
-        out_activation = self.activation(out_batch)
-        out_pooling = self.pooling_layer(out_activation)
-        out_flatten = self.flatten_layer(out_pooling)
-        out_dropout = self.dropout_layer(out_flatten, training)
-        output = self.output_layer(out_dropout)
+    def call(self, data, training=False):
 
-        return output
+        length = data.shape[1]
 
+        # initialize state of the simple rnn cell
+        state = tf.zeros((data.shape[0], self.cell.units), tf.float32)
 
-# ----------- task 2.2 "DenseNet" -----------
-class TransitionLayer(tf.keras.layers.Layer):
-    """ Transition layer definition """
-    def __init__(self):
-        super(TransitionLayer, self).__init__()
+        # initialize array for hidden states (only relevant if self.return_sequences == True)
+        hidden_states = tf.TensorArray(dtype=tf.float32, size=length)
 
-        self.conv_layer = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(1, 1),
-            padding="valid"  # No padding
-        )
+        for t in tf.range(length):
+            input_t = data[:, t, :]
 
-        self.batch_norm_layer = tf.keras.layers.BatchNormalization()
-        self.activation = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
+            state = self.cell(input_t, state, training)
 
-        self.pooling_layer = tf.keras.layers.AveragePooling2D(
-            strides=(2, 2), padding="valid"
-        )
+            if self.return_sequences:
+                # write the states to the TensorArray
+                # hidden_states = hidden_states.write(t, state)
+                hidden_states.append(state)
 
-    # TODO: Growth Rate?
-    def call(self, inputs, training: bool):
-        out_conv = self.conv_layer(inputs)
-        out_batch_norm = self.batch_norm_layer(out_conv, training)
-        out_activation = self.activation(out_batch_norm)
-        out_pooling = self.pooling_layer(out_activation)
-        return out_pooling
+        if self.return_sequences:
+            # transpose the sequence of hidden_states from TensorArray accordingly
+            # (batch and time dimensions are otherwise switched after .stack())
+            outputs = tf.transpose(hidden_states.stack(), [1, 0, 2])
 
+        else:
+            # take the last hidden state of the simple rnn cell
+            outputs = state
 
-class Block(tf.keras.layers.Layer):
-    """ Block layer definition """
-    def __init__(self):
-        super(Block, self).__init__()
+        return outputs
 
-        self.batch_norm_layer = tf.keras.layers.BatchNormalization()
+# Cell
 
-        self.activation = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
+class CustomSimpleRNNCell(tf.keras.layers.Layer):
+    def __init__(self, units, kernel_regularizer=None):
+        super(CustomSimpleRNNCell, self).__init__()
 
-        self.conv_layer = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(3, 3),
-            padding="same",
-        )
+        self.units = units
 
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
-        out_batch_norm = self.batch_norm_layer(inputs, training)
-        out_activation = self.activation(out_batch_norm)
-        out_conv = self.conv_layer(out_activation)
+        self.dense_hstate = tf.keras.layers.Dense(units,
+                                                  kernel_regularizer=kernel_regularizer,
+                                                  use_bias=False)
 
-        return out_conv
+        self.dense_input = tf.keras.layers.Dense(units,
+                                                 kernel_regularizer=kernel_regularizer,
+                                                 use_bias=False)
 
+        self.bias = tf.Variable(tf.zeros(units), name="RNN_Cell_biases")
 
-class DenseBlock(tf.keras.layers.Layer):
-    """ Dense block layer definition
+        self.state_size = units
 
-    Args:
-        blocks: number of blocks in the dense block layer.
-    """
-    def __init__(self, blocks: int = 2):
-        super(DenseBlock, self).__init__()
+    def call(self, input_t, state, training=False):
+        # we compute the sum of the input at t matrix multiplied and the previous state matrix multiplied
+        # and an additional bias added.
+        x_sum = self.dense_input(input_t) + self.dense_hstate(state) + self.bias
 
-        self.dense_blocks = [Block() for _ in range(blocks)]
+        # finally we use hyperbolic tangent as an activation function to update the RNN cell state
+        state = tf.nn.tanh(x_sum)
 
-        self.batch_norm_layer_1 = tf.keras.layers.BatchNormalization()
+        return (state)
 
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool) -> tf.Tensor:
-        out = inputs
 
-        for dense_block in self.dense_blocks:
-            out = dense_block(out, training)
+# Model
 
-        out_concatenate = tf.keras.layers.Concatenate()([inputs, out])
+class RNN_Model(tf.keras.Model):
+    def __init__(self, units):
+        super(RNN_Model, self).__init__()
 
-        return out_concatenate
+        self.RNNWrapper = RNNWrapper(CustomSimpleRNNCell(units), return_sequences=False)
 
+        self.dense = tf.keras.layers.Dense(128, activation="relu")
 
-class DenseNet(tf.keras.Model):
-    """ DenseNet model definition
+        self.out = tf.keras.layers.Dense(10, activation="softmax")
 
-    Args:
-        blocks: number of dense blocks in the model.
-    """
-    def __init__(self, blocks: int = 2):
-        super(DenseNet, self).__init__()
+    # @tf.function(experimental_relax_shapes=True)
+    def call(self, data, training=False):
+        x = self.RNNWrapper(data, training)
+        x = self.dense(x)
+        x = self.out(x)
 
-        self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=64,
-            kernel_size=(3, 3),
-            input_shape=(32, 32, 3),
-            strides=(2, 2),
-            padding="same",
-        )
-
-        self.batch_layer_1 = tf.keras.layers.BatchNormalization()
-        self.activation_1 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-
-        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")
-
-        self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(1, 1),
-            padding="same",
-        )
-
-        self.dense_block_1 = DenseBlock()
-
-        self.dense_blocks = [DenseBlock() for _ in range(blocks)]           # change number of conv layers here
-        self.trans_layers = [TransitionLayer() for _ in range(blocks)]
-
-        self.batch_layer_2 = tf.keras.layers.BatchNormalization()
-        self.activation_2 = tf.keras.layers.Activation(
-            activation=tf.keras.activations.relu
-        )
-
-        self.pooling_layer_2 = tf.keras.layers.GlobalAveragePooling2D()
-
-        self.flatten_layer = tf.keras.layers.Flatten()
-        self.dropout_layer = tf.keras.layers.Dropout(rate=0.5)
-        self.output_layer = tf.keras.layers.Dense(
-            10, activation=tf.keras.activations.softmax
-        )
-
-    @tf.function
-    def call(self, inputs: tf.Tensor, training: bool = True) -> tf.Tensor:
-        out_conv_1 = self.conv_layer_1(inputs)
-        out_batch_1 = self.batch_layer_1(out_conv_1, training)
-        out_activation_1 = self.activation_1(out_batch_1)
-        out_pooling_1 = self.pooling_layer_1(out_activation_1)
-        out_conv_2 = self.conv_layer_2(out_pooling_1)
-
-        out = self.dense_block_1(out_conv_2, training)
-
-        for i in range(len(self.dense_blocks)):
-            out = self.trans_layers[i](out, training)
-            out = self.dense_blocks[i](out, training)
-
-        out_batch_2 = self.batch_layer_2(out, training)
-        out_activation_2 = self.activation_2(out_batch_2)
-
-        out_pooling_2 = self.pooling_layer_2(out_activation_2)
-        out_flatten = self.flatten_layer(out_pooling_2)
-        out_dropout = self.dropout_layer(out_flatten, training)
-        out_output = self.output_layer(out_dropout)
-
-        return out_output
+        return x
