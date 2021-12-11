@@ -7,8 +7,10 @@ import tensorflow as tf
 
 
 class LSTM_Cell(tf.keras.layers.Layer):
+    # TODO: document
+
     def __init__(self, units):
-        super(CustomSimpleRNNCell, self).__init__()
+        super(LSTM_Cell, self).__init__()
 
         self.units = units
 
@@ -35,6 +37,7 @@ class LSTM_Cell(tf.keras.layers.Layer):
         self.state_size = units
 
     def call(self, inputs, state, training=False):
+        # TODO: document
 
         out_concatenate = tf.concat((state[0], inputs), axis=1)
 
@@ -56,9 +59,9 @@ class LSTM_Cell(tf.keras.layers.Layer):
 # Wrapper
 
 
-class RNNWrapper(tf.keras.layers.Layer):
-    def __init__(self, RNN_Cell, return_sequences=False):
-        super(RNNWrapper, self).__init__()
+class LSTM_Layer(tf.keras.layers.Layer):
+    def __init__(self, cell_units):
+        super(LSTM_Layer, self).__init__()
 
         self.return_sequences = return_sequences
 
