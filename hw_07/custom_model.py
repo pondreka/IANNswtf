@@ -3,6 +3,56 @@ import tensorflow as tf
 
 # ---------- task 2 "Model" -----------
 
+# Cell
+
+
+class LSTM_Cell(tf.keras.layers.Layer):
+    def __init__(self, units):
+        super(CustomSimpleRNNCell, self).__init__()
+
+        self.units = units
+
+        self.dense_forget_gate = tf.keras.layers.Dense(
+            units,
+            activation=tf.nn.sigmoid,
+            bias_initializer=tf.keras.initializers.Zeros(),
+        )
+
+        self.dense_input_gate = tf.keras.layers.Dense(
+            units, activation=tf.nn.sigmoid
+        )
+
+        self.dense_state_candidates = tf.keras.layers.Dense(
+            units, activation=tf.nn.tanh
+        )
+
+        self.dense_output = tf.keras.layers.Dense(
+            units, activation=tf.nn.sigmoid
+        )
+
+        # self.bias = tf.Variable(tf.zeros(units), name="LSTM_Cell_biases")
+
+        self.state_size = units
+
+    def call(self, inputs, state, training=False):
+
+        out_concatenate = tf.concat((state[0], inputs), axis=1)
+
+        forget_gate = self.dense_forget_gate(out_concatenate)
+
+        input_gate = self.dense_input_gate(out_concatenate)
+
+        state_candidates = self.dense_input_gate(out_concatenate)
+
+        state[1] = forget_gate * state[1] + input_gate * state_candidates
+
+        output_gate = self.dense_input_gate(out_concatenate)
+
+        state[0] = output_gate * tf.math.tanh(state[1])
+
+        return state
+
+
 # Wrapper
 
 
@@ -44,40 +94,6 @@ class RNNWrapper(tf.keras.layers.Layer):
             outputs = state
 
         return outputs
-
-
-# Cell
-
-
-class CustomSimpleRNNCell(tf.keras.layers.Layer):
-    def __init__(self, units, kernel_regularizer=None):
-        super(CustomSimpleRNNCell, self).__init__()
-
-        self.units = units
-
-        self.dense_hstate = tf.keras.layers.Dense(
-            units, kernel_regularizer=kernel_regularizer, use_bias=False
-        )
-
-        self.dense_input = tf.keras.layers.Dense(
-            units, kernel_regularizer=kernel_regularizer, use_bias=False
-        )
-
-        self.bias = tf.Variable(tf.zeros(units), name="RNN_Cell_biases")
-
-        self.state_size = units
-
-    def call(self, input_t, state, training=False):
-        # we compute the sum of the input at t matrix multiplied and the previous state matrix multiplied
-        # and an additional bias added.
-        x_sum = (
-            self.dense_input(input_t) + self.dense_hstate(state) + self.bias
-        )
-
-        # finally we use hyperbolic tangent as an activation function to update the RNN cell state
-        state = tf.nn.tanh(x_sum)
-
-        return state
 
 
 # Model
