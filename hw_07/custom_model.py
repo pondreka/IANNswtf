@@ -63,61 +63,37 @@ class LSTM_Cell(tf.keras.layers.Layer):
 
 
 class LSTM_Layer(tf.keras.layers.Layer):
-    def __init__(self, cell_units, num_cells):
+    # TODO: document
+
+    def __init__(self, cell_units):
         super(LSTM_Layer, self).__init__()
 
-        self.cells = [LSTM_Cell(cell_units) for _ in num_cells]
+        self.cell = LSTM_Cell(cell_units)
 
-    def call(self, data, training=False):
+    def call(self, data, states, training=False):
+        # TODO: document
 
-        length = data.shape[1]
 
-        # initialize state of the simple rnn cell
-        state = tf.zeros((data.shape[0], self.cell.units), tf.float32)
-
-        # initialize array for hidden states (only relevant if self.return_sequences == True)
-        hidden_states = tf.TensorArray(dtype=tf.float32, size=length)
-
-        for t in tf.range(length):
-            input_t = data[:, t, :]
-
-            state = self.cell(input_t, state, training)
-
-            if self.return_sequences:
-                # write the states to the TensorArray
-                # hidden_states = hidden_states.write(t, state)
-                hidden_states.append(state)
-
-        if self.return_sequences:
-            # transpose the sequence of hidden_states from TensorArray accordingly
-            # (batch and time dimensions are otherwise switched after .stack())
-            outputs = tf.transpose(hidden_states.stack(), [1, 0, 2])
-
-        else:
-            # take the last hidden state of the simple rnn cell
-            outputs = state
 
         return outputs
+
+    def zero_states(self, batch_size):
+        # TODO: document
+        return tf.zeros(self.cell_units, batch_size), tf.zeros(self.cell_units, batch_size)
 
 
 # Model
 
 
-class RNN_Model(tf.keras.Model):
+class LSTM_Model(tf.keras.Model):
     def __init__(self, units):
-        super(RNN_Model, self).__init__()
+        super(LSTM_Model, self).__init__()
 
-        self.RNNWrapper = RNNWrapper(
-            CustomSimpleRNNCell(units), return_sequences=False
-        )
+        self.lstm_layer = LSTM_Layer(units)
 
-        self.dense = tf.keras.layers.Dense(128, activation="relu")
 
-        self.out = tf.keras.layers.Dense(10, activation="softmax")
-
-    # @tf.function(experimental_relax_shapes=True)
     def call(self, data, training=False):
-        x = self.RNNWrapper(data, training)
+        x = self.lstm_layer(data)
         x = self.dense(x)
         x = self.out(x)
 
