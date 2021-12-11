@@ -39,6 +39,7 @@ class LSTM_Cell(tf.keras.layers.Layer):
     def call(self, inputs, state, training=False):
         # TODO: document
 
+        # Preparing
         out_concatenate = tf.concat((state[0], inputs), axis=1)
 
         forget_gate = self.dense_forget_gate(out_concatenate)
@@ -47,8 +48,10 @@ class LSTM_Cell(tf.keras.layers.Layer):
 
         state_candidates = self.dense_input_gate(out_concatenate)
 
+        # Update cell state
         state[1] = forget_gate * state[1] + input_gate * state_candidates
 
+        # Determining the hidden state/output
         output_gate = self.dense_input_gate(out_concatenate)
 
         state[0] = output_gate * tf.math.tanh(state[1])
@@ -60,12 +63,10 @@ class LSTM_Cell(tf.keras.layers.Layer):
 
 
 class LSTM_Layer(tf.keras.layers.Layer):
-    def __init__(self, cell_units):
+    def __init__(self, cell_units, num_cells):
         super(LSTM_Layer, self).__init__()
 
-        self.return_sequences = return_sequences
-
-        self.cell = RNN_Cell
+        self.cells = [LSTM_Cell(cell_units) for _ in num_cells]
 
     def call(self, data, training=False):
 
