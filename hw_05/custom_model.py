@@ -41,9 +41,7 @@ class ConvModel(tf.keras.Model):
             input_shape=(28, 28, 1),
             padding="same",
         )
-        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
-            padding="same",
-        )
+        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(padding="same",)
         self.conv_layer_2 = tf.keras.layers.Conv2D(
             filters=32,
             kernel_size=(3, 3),

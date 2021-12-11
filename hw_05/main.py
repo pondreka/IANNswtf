@@ -73,8 +73,7 @@ def main():
         test[losses],
         index,
         num_plot_visualization,
-        group_name=f"epochs={num_epochs} " 
-                   f"lr={learning_rate}, "
+        group_name=f"epochs={num_epochs} " f"lr={learning_rate}, ",
     )
 
     plt.tight_layout()

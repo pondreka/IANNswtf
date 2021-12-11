@@ -3,13 +3,7 @@ from train_and_test import train_step, test
 
 
 def training(
-    model,
-    loss,
-    num_epochs,
-    optimizer,
-    train_ds,
-    valid_ds,
-    test_ds,
+    model, loss, num_epochs, optimizer, train_ds, valid_ds, test_ds,
 ):
     """Train the mode for the number of epochs specified.
 

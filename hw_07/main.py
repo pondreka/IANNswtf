@@ -2,7 +2,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 # import numpy as np
-import tensorflow_datasets as tfds
+# import tensorflow_datasets as tfds
 
 # from train_and_test import train_step, test
 from custom_model import *
@@ -10,6 +10,7 @@ from data_preparation import prepare_data, my_integration_task
 from train_and_visualize import training, prepare_visualization
 
 import os
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 
@@ -18,15 +19,17 @@ def main():
 
     data_set = tf.data.Dataset.from_generator(my_integration_task)
 
-
-    # -------- task 1.1 "Construct a Data Pipeline" ------------
+    # -------- task 1.3 "Construct a Data Pipeline" ------------
 
     overall_total: int = 50000
     valid_total: int = int(overall_total / 5)  # as many as test
-    train_total: int = overall_total - valid_total
+    train_total: int = overall_total - (valid_total * 2)
     # split the first batch
     ds_train = ds_train_and_valid.take(train_total)
-    ds_valid = ds_train_and_valid.skip(train_total)
+    ds_valid = ds_train_and_valid.skip(train_total).take(valid_total)
+    ds_test = ds_train_and_valid.skip(train_total + valid_total).take(
+        valid_total
+    )
 
     # massage data
     train_ds = ds_train.apply(prepare_data)

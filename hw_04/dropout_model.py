@@ -29,9 +29,7 @@ class CustomLayer(tf.keras.layers.Layer):
             regularizer=tf.keras.regularizers.L1L2(),
         )
         self.b = self.add_weight(
-            shape=(self.units,),
-            initializer="random_normal",
-            trainable=True,
+            shape=(self.units,), initializer="random_normal", trainable=True,
         )
 
     @tf.function

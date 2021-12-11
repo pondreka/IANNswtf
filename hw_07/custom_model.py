@@ -5,6 +5,7 @@ import tensorflow as tf
 
 # Wrapper
 
+
 class RNNWrapper(tf.keras.layers.Layer):
     def __init__(self, RNN_Cell, return_sequences=False):
         super(RNNWrapper, self).__init__()
@@ -44,7 +45,9 @@ class RNNWrapper(tf.keras.layers.Layer):
 
         return outputs
 
+
 # Cell
+
 
 class CustomSimpleRNNCell(tf.keras.layers.Layer):
     def __init__(self, units, kernel_regularizer=None):
@@ -52,13 +55,13 @@ class CustomSimpleRNNCell(tf.keras.layers.Layer):
 
         self.units = units
 
-        self.dense_hstate = tf.keras.layers.Dense(units,
-                                                  kernel_regularizer=kernel_regularizer,
-                                                  use_bias=False)
+        self.dense_hstate = tf.keras.layers.Dense(
+            units, kernel_regularizer=kernel_regularizer, use_bias=False
+        )
 
-        self.dense_input = tf.keras.layers.Dense(units,
-                                                 kernel_regularizer=kernel_regularizer,
-                                                 use_bias=False)
+        self.dense_input = tf.keras.layers.Dense(
+            units, kernel_regularizer=kernel_regularizer, use_bias=False
+        )
 
         self.bias = tf.Variable(tf.zeros(units), name="RNN_Cell_biases")
 
@@ -67,21 +70,26 @@ class CustomSimpleRNNCell(tf.keras.layers.Layer):
     def call(self, input_t, state, training=False):
         # we compute the sum of the input at t matrix multiplied and the previous state matrix multiplied
         # and an additional bias added.
-        x_sum = self.dense_input(input_t) + self.dense_hstate(state) + self.bias
+        x_sum = (
+            self.dense_input(input_t) + self.dense_hstate(state) + self.bias
+        )
 
         # finally we use hyperbolic tangent as an activation function to update the RNN cell state
         state = tf.nn.tanh(x_sum)
 
-        return (state)
+        return state
 
 
 # Model
+
 
 class RNN_Model(tf.keras.Model):
     def __init__(self, units):
         super(RNN_Model, self).__init__()
 
-        self.RNNWrapper = RNNWrapper(CustomSimpleRNNCell(units), return_sequences=False)
+        self.RNNWrapper = RNNWrapper(
+            CustomSimpleRNNCell(units), return_sequences=False
+        )
 
         self.dense = tf.keras.layers.Dense(128, activation="relu")
 

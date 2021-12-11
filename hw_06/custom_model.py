@@ -4,8 +4,10 @@ import tensorflow as tf
 # ---------- task 2 "Model" -----------
 # ----------- task 2.1 "ResNet" -----------
 
+
 class ResidualBlock(tf.keras.layers.Layer):
     """ Residual block layer definition """
+
     def __init__(self):
         super(ResidualBlock, self).__init__()
 
@@ -15,9 +17,7 @@ class ResidualBlock(tf.keras.layers.Layer):
         )
 
         self.conv_layer_1 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(1, 1),
-            padding="same",
+            filters=32, kernel_size=(1, 1), padding="same",
         )
 
         self.batch_norm_layer_2 = tf.keras.layers.BatchNormalization()
@@ -26,9 +26,7 @@ class ResidualBlock(tf.keras.layers.Layer):
         )
 
         self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(3, 3),
-            padding="same",
+            filters=32, kernel_size=(3, 3), padding="same",
         )
 
         self.batch_norm_layer_3 = tf.keras.layers.BatchNormalization()
@@ -37,9 +35,7 @@ class ResidualBlock(tf.keras.layers.Layer):
         )
 
         self.conv_layer_3 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(1, 1),
-            padding="same",
+            filters=32, kernel_size=(1, 1), padding="same",
         )
 
     @tf.function
@@ -70,6 +66,7 @@ class ResNet(tf.keras.Model):
     Args:
         blocks: number of residual blocks in the model.
     """
+
     def __init__(self, blocks: int = 3):
         super(ResNet, self).__init__()
 
@@ -89,9 +86,7 @@ class ResNet(tf.keras.Model):
 
         self.pooling_layer = tf.keras.layers.GlobalAveragePooling2D()
         self.flatten_layer = tf.keras.layers.Flatten()
-        self.dropout_layer = tf.keras.layers.Dropout(
-            rate=0.5
-        )
+        self.dropout_layer = tf.keras.layers.Dropout(rate=0.5)
         self.output_layer = tf.keras.layers.Dense(
             10, activation=tf.keras.activations.softmax
         )
@@ -116,13 +111,12 @@ class ResNet(tf.keras.Model):
 # ----------- task 2.2 "DenseNet" -----------
 class TransitionLayer(tf.keras.layers.Layer):
     """ Transition layer definition """
+
     def __init__(self):
         super(TransitionLayer, self).__init__()
 
         self.conv_layer = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(1, 1),
-            padding="valid"  # No padding
+            filters=8, kernel_size=(1, 1), padding="valid"  # No padding
         )
 
         self.batch_norm_layer = tf.keras.layers.BatchNormalization()
@@ -145,6 +139,7 @@ class TransitionLayer(tf.keras.layers.Layer):
 
 class Block(tf.keras.layers.Layer):
     """ Block layer definition """
+
     def __init__(self):
         super(Block, self).__init__()
 
@@ -155,9 +150,7 @@ class Block(tf.keras.layers.Layer):
         )
 
         self.conv_layer = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(3, 3),
-            padding="same",
+            filters=8, kernel_size=(3, 3), padding="same",
         )
 
     @tf.function
@@ -175,6 +168,7 @@ class DenseBlock(tf.keras.layers.Layer):
     Args:
         blocks: number of blocks in the dense block layer.
     """
+
     def __init__(self, blocks: int = 2):
         super(DenseBlock, self).__init__()
 
@@ -200,6 +194,7 @@ class DenseNet(tf.keras.Model):
     Args:
         blocks: number of dense blocks in the model.
     """
+
     def __init__(self, blocks: int = 2):
         super(DenseNet, self).__init__()
 
@@ -216,17 +211,19 @@ class DenseNet(tf.keras.Model):
             activation=tf.keras.activations.relu
         )
 
-        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")
+        self.pooling_layer_1 = tf.keras.layers.MaxPooling2D(
+            pool_size=(3, 3), strides=(2, 2), padding="same"
+        )
 
         self.conv_layer_2 = tf.keras.layers.Conv2D(
-            filters=8,
-            kernel_size=(1, 1),
-            padding="same",
+            filters=8, kernel_size=(1, 1), padding="same",
         )
 
         self.dense_block_1 = DenseBlock()
 
-        self.dense_blocks = [DenseBlock() for _ in range(blocks)]           # change number of conv layers here
+        self.dense_blocks = [
+            DenseBlock() for _ in range(blocks)
+        ]  # change number of conv layers here
         self.trans_layers = [TransitionLayer() for _ in range(blocks)]
 
         self.batch_layer_2 = tf.keras.layers.BatchNormalization()
