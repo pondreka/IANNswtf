@@ -4,11 +4,9 @@ from data_preparation import create_dataset
 
 # ---------- task 2 "The network" -----------
 
-# Cell
-
 
 class LSTM_Cell(tf.keras.layers.Layer):
-    # TODO: document
+    """ LSTM cell definition """
 
     def __init__(self, units):
         super(LSTM_Cell, self).__init__()
@@ -34,9 +32,15 @@ class LSTM_Cell(tf.keras.layers.Layer):
         self.state_size = units
 
     @tf.function
-    def call(self, inputs, hidden_state, cell_state, training=False):
-        # TODO: document
-
+    def call(self, inputs, hidden_state, cell_state):
+        """ LSTM layer propagation
+            Args:
+                inputs
+                hidden_state
+                cell_state
+            Return:
+                tuple of the resulting hidden and cell states
+        """
         # Preparing
         out_concatenate = tf.concat((hidden_state, inputs), axis=1)
 
@@ -57,11 +61,8 @@ class LSTM_Cell(tf.keras.layers.Layer):
         return hidden_state, cell_state
 
 
-# Wrapper
-
-
 class LSTM_Layer(tf.keras.layers.Layer):
-    # TODO: document
+    """ LSTM layer definition """
 
     def __init__(self, cell_units):
         super(LSTM_Layer, self).__init__()
@@ -69,10 +70,15 @@ class LSTM_Layer(tf.keras.layers.Layer):
         self.cell = LSTM_Cell(cell_units)
 
     @tf.function
-    def call(self, inputs, training=False):
-        # TODO: document
+    def call(self, inputs):
+        """ LSTM layer propagation
+            Args:
+                inputs: input data
+            Return:
+                output of the layer
+        """
 
-        # https://www.tensorflow.org/guide/function#accumulating_values_in_a_loop
+        # Doc: https://www.tensorflow.org/guide/function#accumulating_values_in_a_loop
         length = inputs.shape[1]
 
         hidden_state = self.zero_states(inputs.shape[0])
@@ -82,30 +88,41 @@ class LSTM_Layer(tf.keras.layers.Layer):
 
         for t in tf.range(length):
             input_t = inputs[:, t, :]
-            hidden_state, cell_state = self.cell(input_t, hidden_state, cell_state, training)
+            hidden_state, cell_state = self.cell(input_t, hidden_state, cell_state)
             hidden_states = hidden_states.write(t, hidden_state)        # cell_state here as well?
 
         return tf.transpose(hidden_states.stack(), [1, 0, 2])
 
     def zero_states(self, batch_size):
-        # TODO: document
+        """ Inits states
+            Args:
+                batch_size: batch input size
+            Return:
+                tuple of state filled with zeros.
+        """
+
         return tf.zeros((batch_size, self.cell.state_size), tf.float32)
 
 
-# Model
-
-
 class LSTM_Model(tf.keras.Model):
+    """ LSTM model definition """
 
-    # TODO: document
     def __init__(self):
         super(LSTM_Model, self).__init__()
-
-        self.lstm_layer = LSTM_Layer(1)
+        self.lstm_layer = LSTM_Layer(100)
         self.out = tf.keras.layers.Dense(1, activation=tf.nn.sigmoid)
 
+    @tf.function
     def call(self, data, training=False):
-        out_cell = self.lstm_layer(data, training)
+        """ LSTM model propagation
+            Args:
+                data: input data
+                training: flag to indicate training
+            Return:
+                output of the model
+        """
+        out_cell = self.lstm_layer(data)
         output = self.out(out_cell)
 
         return output
+

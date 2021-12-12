@@ -21,9 +21,14 @@ def main():
 
     # -------- task 1.3 "Create a Data pipeline" ------------
 
-    ds_train = data_set.take(7000)
-    ds_valid = data_set.take(1500)
-    ds_test = data_set.take(1500)
+    train_size = 10000
+    valid_size = 1500
+
+    ds_train = data_set.take(train_size)
+    data_set = data_set.skip(train_size)
+    ds_valid = data_set.take(valid_size)
+    data_set = data_set.skip(valid_size)
+    ds_test = data_set.take(valid_size)
 
     # massage data
     train_ds = ds_train.apply(prepare_data)
@@ -36,15 +41,15 @@ def main():
 
     # -------- task 3 "Training" ------------
 
-    num_epochs: int = 15
-    learning_rate: float = 0.001
+    num_epochs: int = 10
+    learning_rate: float = 0.01
 
-    cat_cross_ent_loss = tf.keras.losses.CategoricalCrossentropy()
+    bin_cross_ent_loss = tf.keras.losses.BinaryCrossentropy()
     adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     train, valid, test = training(
         model=model,
-        loss=cat_cross_ent_loss,
+        loss=bin_cross_ent_loss,
         num_epochs=num_epochs,
         optimizer=adam_optimizer,
         train_ds=train_ds,

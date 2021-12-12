@@ -26,8 +26,14 @@ def prepare_data(ds):
 
 
 def integration_task(seq_len: int, num_samples: int):
-
-    for _ in range (num_samples):
+    """ Generator of noise, target data
+        Args:
+            seq_len: number of noise signals
+            num_samples: num of total samples
+        Yields:
+            tuple of signal and target
+    """
+    for _ in range(num_samples):
         signals = np.random.normal(0, 1, seq_len)
         # final integral (just positives)
         output = signals.sum(axis=-1) > 0
@@ -38,8 +44,8 @@ def integration_task(seq_len: int, num_samples: int):
 
 
 def my_integration_task():
-
-    seq_len: int = 20
+    """ Wrapper for the integration_task generator that defines the sequence length and number of samples """
+    seq_len: int = 25
     num_samples: int = 10000
 
     while True:
@@ -47,6 +53,11 @@ def my_integration_task():
 
 
 def create_dataset():
+    """ Generate dataset from custom generators
+
+        Return:
+            Dataset
+    """
     return tf.data.Dataset.from_generator(my_integration_task, output_types=(tf.float32, tf.float32))
 
 
