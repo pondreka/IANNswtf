@@ -89,7 +89,10 @@ class LSTM_Layer(tf.keras.layers.Layer):
 
     def zero_states(self, batch_size):
         # TODO: document
-        return tf.zeros(self.cell_units, batch_size), tf.zeros(self.cell_units, batch_size)
+        return (
+            tf.zeros(self.cell_units, batch_size),
+            tf.zeros(self.cell_units, batch_size),
+        )
 
 
 # Model
@@ -100,7 +103,6 @@ class LSTM_Model(tf.keras.Model):
         super(LSTM_Model, self).__init__()
 
         self.lstm_layer = LSTM_Layer(units)
-
 
     def call(self, data, training=False):
         x = self.lstm_layer(data)
