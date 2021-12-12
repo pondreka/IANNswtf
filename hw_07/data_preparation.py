@@ -4,55 +4,52 @@ import tensorflow as tf
 import numpy as np
 
 
-def prepare_data(dataset):
+# ------------------ Task 1.3 "Create a Data pipeline" --------------------
+def prepare_data(ds):
     """Build a tensorflow-dataset from the original data.
 
     Args:
-      dataset (tensorflow_dataset): A dataset.
+      ds (tensorflow_dataset): A dataset.
 
     Returns:
       prepared dataset
     """
-    # convert data from uint8 to float32
-    ds = dataset.map(lambda img, target: (tf.cast(img, tf.float32), target))
+    ds = ds.map(lambda seq, target: (seq, target))
+    ds = ds.shuffle(256)
+    ds = ds.batch(64)
+    ds = ds.prefetch(128)
 
-    # sloppy input normalization, just bringing image values from range
-    # [-x, x] to [-1, 1]
-    ds = ds.map(lambda img, target: ((img / tf.norm(img)), target))
-    # create one-hot targets
-    ds = ds.map(lambda img, target: (img, tf.one_hot(target, depth=10)))
-    # cache this progress in memory, as there is no need to redo it; it
-    # is deterministic after all
-    ds = ds.cache()
-    # shuffle, batch, prefetch
-    ds = ds.shuffle(1000)
-    ds = ds.batch(1024)
-    ds = ds.prefetch(2048)
-    # return preprocessed dataset
     return ds
 
 
-# Task 1.2
+# ------------- Task 1.2 "Generate a Tensorflow Dataset" --------------------
 
 
 def integration_task(seq_len: int, num_samples: int):
-    while True:
-        signals = np.random.normal(0, 1, (num_samples, seq_len))
+
+    for _ in range (num_samples):
+        signals = np.random.normal(0, 1, seq_len)
         # final integral (just positives)
-        output = signals.sum(1) > 0
+        output = signals.sum(axis=-1) > 0
         output = output.astype(float)
-        # TODO: flatten signals?
+        output = np.expand_dims(output, -1)
+        signals = np.expand_dims(signals, -1)
         yield signals, output
 
 
 def my_integration_task():
-    # test:
-    seq_len: int = 10
-    # real one though, when we're done
-    # seq_len: int = 69
 
-    # num_samples: int = 80000
-    num_samples: int = 420
+    seq_len: int = 20
+    num_samples: int = 10000
 
     while True:
-        yield integration_task(seq_len, num_samples)
+        yield next(integration_task(seq_len, num_samples))
+
+
+def create_dataset():
+    return tf.data.Dataset.from_generator(my_integration_task, output_types=(tf.float32, tf.float32))
+
+
+
+
+

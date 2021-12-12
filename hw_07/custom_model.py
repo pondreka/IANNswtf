@@ -1,7 +1,8 @@
 import tensorflow as tf
+from data_preparation import create_dataset
 
 
-# ---------- task 2 "Model" -----------
+# ---------- task 2 "The network" -----------
 
 # Cell
 
@@ -11,8 +12,6 @@ class LSTM_Cell(tf.keras.layers.Layer):
 
     def __init__(self, units):
         super(LSTM_Cell, self).__init__()
-
-        self.units = units
 
         self.dense_forget_gate = tf.keras.layers.Dense(
             units,
@@ -32,32 +31,30 @@ class LSTM_Cell(tf.keras.layers.Layer):
             units, activation=tf.nn.sigmoid
         )
 
-        # self.bias = tf.Variable(tf.zeros(units), name="LSTM_Cell_biases")
-
         self.state_size = units
 
     @tf.function
-    def call(self, inputs, state, training=False):
+    def call(self, inputs, hidden_state, cell_state, training=False):
         # TODO: document
 
         # Preparing
-        out_concatenate = tf.concat((state[0], inputs), axis=1)
+        out_concatenate = tf.concat((hidden_state, inputs), axis=1)
 
         forget_gate = self.dense_forget_gate(out_concatenate)
 
         input_gate = self.dense_input_gate(out_concatenate)
 
-        state_candidates = self.dense_input_gate(out_concatenate)
+        state_candidates = self.dense_state_candidates(out_concatenate)
 
         # Update cell state
-        state[1] = forget_gate * state[1] + input_gate * state_candidates
+        cell_state = forget_gate * cell_state + input_gate * state_candidates
 
         # Determining the hidden state/output
-        output_gate = self.dense_input_gate(out_concatenate)
+        output_gate = self.dense_output(out_concatenate)
 
-        state[0] = output_gate * tf.math.tanh(state[1])
+        hidden_state = output_gate * tf.math.tanh(cell_state)
 
-        return state
+        return hidden_state, cell_state
 
 
 # Wrapper
@@ -69,44 +66,46 @@ class LSTM_Layer(tf.keras.layers.Layer):
     def __init__(self, cell_units):
         super(LSTM_Layer, self).__init__()
 
-        self.cell_units = cell_units
         self.cell = LSTM_Cell(cell_units)
 
     @tf.function
-    def call(self, x, states, training=False):
+    def call(self, inputs, training=False):
         # TODO: document
 
         # https://www.tensorflow.org/guide/function#accumulating_values_in_a_loop
-        length = x.shape[1]
+        length = inputs.shape[1]
 
-        states = tf.TensorArray(tf.float32, size=length)
+        hidden_state = self.zero_states(inputs.shape[0])
+        cell_state = self.zero_states(inputs.shape[0])
 
-        for i in tf.range(length):
-            state = self.cell(input_data[i], states)
-            states = states.write(i, state[0])
+        hidden_states = tf.TensorArray(tf.float32, size=length)
 
-        return tf.transpose(states.stack(), [1, 0, 2])
+        for t in tf.range(length):
+            input_t = inputs[:, t, :]
+            hidden_state, cell_state = self.cell(input_t, hidden_state, cell_state, training)
+            hidden_states = hidden_states.write(t, hidden_state)        # cell_state here as well?
+
+        return tf.transpose(hidden_states.stack(), [1, 0, 2])
 
     def zero_states(self, batch_size):
         # TODO: document
-        return (
-            tf.zeros(self.cell_units, batch_size),
-            tf.zeros(self.cell_units, batch_size),
-        )
+        return tf.zeros((batch_size, self.cell.state_size), tf.float32)
 
 
 # Model
 
 
 class LSTM_Model(tf.keras.Model):
-    def __init__(self, units):
+
+    # TODO: document
+    def __init__(self):
         super(LSTM_Model, self).__init__()
 
-        self.lstm_layer = LSTM_Layer(units)
+        self.lstm_layer = LSTM_Layer(1)
+        self.out = tf.keras.layers.Dense(1, activation=tf.nn.sigmoid)
 
     def call(self, data, training=False):
-        x = self.lstm_layer(data)
-        x = self.dense(x)
-        x = self.out(x)
+        out_cell = self.lstm_layer(data, training)
+        output = self.out(out_cell)
 
-        return x
+        return output

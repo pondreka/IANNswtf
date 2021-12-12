@@ -27,11 +27,10 @@ def train_step(
     """
 
     with tf.GradientTape() as tape:
-        prediction = model(data)
+        predictions = model(data)
+        prediction = predictions[:, -1]
         loss = loss_function(target, prediction)
-        accuracy = tf.keras.backend.argmax(
-            target, axis=1
-        ) == tf.keras.backend.argmax(prediction, axis=1)
+        accuracy = target == np.round(prediction)
         accuracy = np.mean(accuracy)
         gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -55,11 +54,10 @@ def test(
     test_accuracy_aggregator = []
     test_loss_aggregator = []
     for (data, target) in test_data:
-        prediction = model(data, False)
+        predictions = model(data, False)
+        prediction = predictions[:, -1]
         sample_test_loss = loss_function(target, prediction)
-        sample_test_accuracy = tf.keras.backend.argmax(
-            target, axis=1
-        ) == tf.keras.backend.argmax(prediction, axis=1)
+        sample_test_accuracy = target == np.round(prediction)
         sample_test_accuracy = np.mean(sample_test_accuracy)
         test_loss_aggregator.append(sample_test_loss.numpy())
         test_accuracy_aggregator.append(np.mean(sample_test_accuracy))
