@@ -17,7 +17,7 @@ class LSTM_Cell(tf.keras.layers.Layer):
         self.dense_forget_gate = tf.keras.layers.Dense(
             units,
             activation=tf.nn.sigmoid,
-            bias_initializer=tf.keras.initializers.Zeros(),
+            bias_initializer=tf.keras.initializers.Ones(),
         )
 
         self.dense_input_gate = tf.keras.layers.Dense(
@@ -36,6 +36,7 @@ class LSTM_Cell(tf.keras.layers.Layer):
 
         self.state_size = units
 
+    @tf.function
     def call(self, inputs, state, training=False):
         # TODO: document
 
@@ -68,14 +69,23 @@ class LSTM_Layer(tf.keras.layers.Layer):
     def __init__(self, cell_units):
         super(LSTM_Layer, self).__init__()
 
+        self.cell_units = cell_units
         self.cell = LSTM_Cell(cell_units)
 
-    def call(self, data, states, training=False):
+    @tf.function
+    def call(self, x, states, training=False):
         # TODO: document
 
+        # https://www.tensorflow.org/guide/function#accumulating_values_in_a_loop
+        length = x.shape[1]
 
+        states = tf.TensorArray(tf.float32, size=length)
 
-        return outputs
+        for i in tf.range(length):
+            state = self.cell(input_data[i], states)
+            states = states.write(i, state[0])
+
+        return tf.transpose(states.stack(), [1, 0, 2])
 
     def zero_states(self, batch_size):
         # TODO: document
