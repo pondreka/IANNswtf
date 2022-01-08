@@ -58,9 +58,6 @@ def create_dataset():
         Return:
             Dataset
     """
-    return tf.data.Dataset.from_generator(my_integration_task, output_types=(tf.float32, tf.float32))
-
-
-
-
-
+    return tf.data.Dataset.from_generator(
+        my_integration_task, output_types=(tf.float32, tf.float32)
+    )

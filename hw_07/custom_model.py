@@ -88,8 +88,12 @@ class LSTM_Layer(tf.keras.layers.Layer):
 
         for t in tf.range(length):
             input_t = inputs[:, t, :]
-            hidden_state, cell_state = self.cell(input_t, hidden_state, cell_state)
-            hidden_states = hidden_states.write(t, hidden_state)        # cell_state here as well?
+            hidden_state, cell_state = self.cell(
+                input_t, hidden_state, cell_state
+            )
+            hidden_states = hidden_states.write(
+                t, hidden_state
+            )  # cell_state here as well?
 
         return tf.transpose(hidden_states.stack(), [1, 0, 2])
 
@@ -125,4 +129,3 @@ class LSTM_Model(tf.keras.Model):
         output = self.out(out_cell)
 
         return output
-
