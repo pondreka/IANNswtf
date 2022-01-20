@@ -20,11 +20,17 @@ def load_data():
 
     train_images = images[:10000]
     test_images = images[10000:14000]
+    test_imgs = test_images[:10]
+    test_imgs = tf.data.Dataset.from_tensor_slices(test_imgs)
+    test_imgs = test_imgs\
+        .map(lambda img: tf.reshape(img, (28, 28, 1)))\
+        .map(lambda img: img / 128 - 1)\
+        .cache()
 
     train_images = data_pipeline(train_images)
     test_images = data_pipeline(test_images)
 
-    return train_images, test_images
+    return train_images, test_images, test_imgs
 
 
 def data_pipeline(data):
@@ -40,7 +46,5 @@ def data_pipeline(data):
 
     return ds
 
-
-train, test = load_data()
 
 
