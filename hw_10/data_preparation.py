@@ -21,10 +21,11 @@ def prepare_data(data):
     """
     data.lower()
     data.replace("\n", "")
-    data = re.sub('[^A-Za-z ]+', '', data)
+    data = re.sub("[^A-Za-z ]+", "", data)
     # split text into words
     data_tokens = tf_txt.WhitespaceTokenizer().split(data)
-    data_tokens = data_tokens[:10000]
+    # TODO: change size to 1000
+    data_tokens = data_tokens[:100]
     return data_tokens
 
 

@@ -12,7 +12,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 # ----------- task 1 "Data set" ------------------
-train_ds, test_ds = tfds.load('mnist', split=['train', 'test'], as_supervised=True)
+train_ds, test_ds = tfds.load(
+    "mnist", split=["train", "test"], as_supervised=True
+)
 test_imgs = test_ds.take(10)
 
 
@@ -22,9 +24,20 @@ def prepare_data(data, noise: float = 0.3):
     # sloppy input normalization, just bringing image values from range [0, 255] to [-1, 1]
     data = data.map(lambda img: img / 255)
     # Add noise to image and create target vector
-    data = data.map(lambda img: (img + tf.random.normal(shape=img.shape, mean=0.0, stddev=1.0 * noise), img))
+    data = data.map(
+        lambda img: (
+            img
+            + tf.random.normal(shape=img.shape, mean=0.0, stddev=1.0 * noise),
+            img,
+        )
+    )
     # Scaling of the noisy image
-    data = data.map(lambda img, target: (tf.clip_by_value(img, clip_value_min=0, clip_value_max=1), target))
+    data = data.map(
+        lambda img, target: (
+            tf.clip_by_value(img, clip_value_min=0, clip_value_max=1),
+            target,
+        )
+    )
     return data
 
 
@@ -42,7 +55,11 @@ def prepare_mnist_data(mnist):
 
 train_ds = train_ds.apply(prepare_mnist_data)
 test_ds = test_ds.apply(prepare_mnist_data)
-test_imgs = test_imgs.apply(prepare_data).map(lambda img, target: img).map(lambda img: tf.expand_dims(img, 0))
+test_imgs = (
+    test_imgs.apply(prepare_data)
+    .map(lambda img, target: img)
+    .map(lambda img: tf.expand_dims(img, 0))
+)
 
 for x, t in train_ds:
     n = 10  # How many digits we will display
@@ -68,36 +85,27 @@ for x, t in train_ds:
 # ------------ task 2 "Model" --------------
 # ------------ task 2.1 "Convolutional Autoencoder" ----------------
 
+
 class Encoder(tf.keras.Model):
     def __init__(self, latent_dim: int = 10):
         super(Encoder, self).__init__()
 
         self.all_layers = [
             tf.keras.layers.Conv2D(
-                filters=32,
-                kernel_size=(3, 3),
-                strides=(2, 2),
-                padding="same",
+                filters=32, kernel_size=(3, 3), strides=(2, 2), padding="same",
             ),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
             tf.keras.layers.Conv2D(
-                filters=64,
-                kernel_size=(3, 3),
-                strides=(2, 2),
-                padding="same",
+                filters=64, kernel_size=(3, 3), strides=(2, 2), padding="same",
             ),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(7 * 7 * 64),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
-            tf.keras.layers.Dense(latent_dim, activation=tf.nn.relu)
-
+            tf.keras.layers.Dense(latent_dim, activation=tf.nn.relu),
         ]
 
     @tf.function
@@ -123,34 +131,24 @@ class Decoder(tf.keras.Model):
             tf.keras.layers.Dense(7 * 7 * 64),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
             tf.keras.layers.Reshape((7, 7, 64)),
-
             tf.keras.layers.Conv2DTranspose(
-                filters=64,
-                kernel_size=(3, 3),
-                strides=(2, 2),
-                padding="same"
+                filters=64, kernel_size=(3, 3), strides=(2, 2), padding="same"
             ),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
             tf.keras.layers.Conv2DTranspose(
-                filters=32,
-                kernel_size=(3, 3),
-                strides=(2, 2),
-                padding="same"
+                filters=32, kernel_size=(3, 3), strides=(2, 2), padding="same"
             ),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Activation(tf.nn.relu),
-
             tf.keras.layers.Conv2D(
                 filters=1,
                 kernel_size=(3, 3),
                 strides=(1, 1),
                 padding="same",
-                activation=tf.nn.sigmoid
-            )
+                activation=tf.nn.sigmoid,
+            ),
         ]
 
     @tf.function
@@ -187,12 +185,12 @@ import numpy as np
 
 
 def train_step(
-        model: tf.keras.Model,
-        data: tf.Tensor,
-        target: tf.Tensor,
-        loss_function: tf.keras.losses,
-        optimizer: tf.keras.optimizers,
-        training: bool = True,
+    model: tf.keras.Model,
+    data: tf.Tensor,
+    target: tf.Tensor,
+    loss_function: tf.keras.losses,
+    optimizer: tf.keras.optimizers,
+    training: bool = True,
 ):
     """Training iteration over one input data.
 
@@ -218,10 +216,10 @@ def train_step(
 
 
 def test(
-        model: tf.keras.Model,
-        test_data: tf.Tensor,
-        loss_function: tf.keras.losses,
-        training: bool = False,
+    model: tf.keras.Model,
+    test_data: tf.Tensor,
+    loss_function: tf.keras.losses,
+    training: bool = False,
 ):
     """Test iteration over all test data.
 
@@ -248,8 +246,8 @@ def test(
 
 def visualization(train_losses, test_losses):
     plt.figure()
-    line1, = plt.plot(train_losses)
-    line2, = plt.plot(test_losses)
+    (line1,) = plt.plot(train_losses)
+    (line2,) = plt.plot(test_losses)
     plt.xlabel("Training steps")
     plt.ylabel("Loss")
     plt.legend((line1, line2), ("training", "test"))
@@ -257,11 +255,11 @@ def visualization(train_losses, test_losses):
 
 
 def training(
-        model: tf.keras.Model,
-        train_ds: tf.Tensor,
-        test_ds: tf.Tensor,
-        num_epochs: int = 5,
-        learning_rate: int = 0.001,
+    model: tf.keras.Model,
+    train_ds: tf.Tensor,
+    test_ds: tf.Tensor,
+    num_epochs: int = 5,
+    learning_rate: int = 0.001,
 ):
     loss = tf.keras.losses.MeanSquaredError()
     optimizer = tf.keras.optimizers.Adam(learning_rate)
@@ -280,7 +278,7 @@ def training(
 
     # We train for num_epochs epochs.
     for epoch in range(num_epochs):
-        print('Epoch: ' + str(epoch))
+        print("Epoch: " + str(epoch))
 
         # training (and checking in with training)
         epoch_loss_agg = []
@@ -321,11 +319,7 @@ def training(
         plt.show()
 
 
-training(
-    model=autoencoder,
-    train_ds=train_ds,
-    test_ds=test_ds
-)
+training(model=autoencoder, train_ds=train_ds, test_ds=test_ds)
 
 autoencoder.summary()
 
@@ -334,11 +328,14 @@ from sklearn.manifold import TSNE
 
 label_names = [str(l) for l in np.arange(10)]
 
-(train_x, train_labels), (test_x, test_labels) = tf.keras.datasets.mnist.load_data()
+(
+    (train_x, train_labels),
+    (test_x, test_labels),
+) = tf.keras.datasets.mnist.load_data()
 
 img = test_x[:1000]
 labels = test_labels[:1000]
-img = tf.expand_dims(tf.cast(img, tf.float32) / 255., -1)
+img = tf.expand_dims(tf.cast(img, tf.float32) / 255.0, -1)
 
 encoded = autoencoder.encoder.predict(img)
 encoded = np.reshape(encoded, (encoded.shape[0], -1))
@@ -346,7 +343,7 @@ encoded = np.reshape(encoded, (encoded.shape[0], -1))
 embedded = TSNE(n_components=2, perplexity=20).fit_transform(encoded)
 
 fig = plt.figure(figsize=(10, 10))
-scatter = plt.scatter(embedded[:, 0], embedded[:, 1], c=labels, cmap='tab10')
+scatter = plt.scatter(embedded[:, 0], embedded[:, 1], c=labels, cmap="tab10")
 plt.legend(handles=scatter.legend_elements()[0], labels=label_names)
 
 model_2dim = Autoencoder(2)
@@ -355,7 +352,7 @@ training(model_2dim, train_ds, test_ds)
 encoded = model_2dim.encoder.predict(img)
 
 fig = plt.figure(figsize=(10, 10))
-scatter = plt.scatter(encoded[:, 0], encoded[:, 1], c=labels, cmap='tab10')
+scatter = plt.scatter(encoded[:, 0], encoded[:, 1], c=labels, cmap="tab10")
 plt.legend(handles=scatter.legend_elements()[0], labels=label_names)
 
 imgs = tf.convert_to_tensor([img[2], img[10]])
@@ -374,5 +371,5 @@ fig = plt.figure(figsize=(2 * num_ints, 4))
 for i in range(num_ints):
     plt.subplot(1, num_ints, i + 1)
     plt.imshow(tf.squeeze(decoded_imgs[i]))
-    plt.axis('off')
+    plt.axis("off")
 plt.show()

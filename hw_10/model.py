@@ -5,15 +5,11 @@ import tensorflow as tf
 class SkipGram(tf.keras.layers.Layer):
     """A custom SkipGram layer"""
 
-    def __init__(self, units: int, activation=tf.nn.sigmoid):
-        """Constructor
-
-        :param units: Input units.
-        :param activation: Activation function used in the forward pass.
-        """
+    def __init__(self):
+        """ Constructor """
         super(SkipGram, self).__init__()
 
-         # TODO: Initialize vocabulary and embedding size.
+        # TODO: Initialize vocabulary and embedding size.
 
     def build(self, input_shape: tf.TensorShape) -> None:
         """Instantiation of weights and bias
@@ -38,4 +34,3 @@ class SkipGram(tf.keras.layers.Layer):
 
         # TODO: calculate and return the loss using tf.nn.nce_loss
         return self.activation(incoming_inputs)
-

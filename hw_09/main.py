@@ -4,16 +4,15 @@ from train_and_test import train_step, test_step
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
+physical_devices = tf.config.experimental.list_physical_devices("GPU")
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # ------------ task 1 "Data set" -----------------
     train, test, test_imgs = load_data()
-
 
     # ------------- task 2 "Model" -------------------
     discriminator = Discriminator()
@@ -22,11 +21,10 @@ if __name__ == '__main__':
     # ------------- task 3 "Training" ----------------
     num_epochs = 10
 
-
     def visualization(train_losses, test_losses, name: str):
         plt.figure()
-        line1, = plt.plot(train_losses)
-        line2, = plt.plot(test_losses)
+        (line1,) = plt.plot(train_losses)
+        (line2,) = plt.plot(test_losses)
         plt.xlabel("Training steps")
         plt.ylabel(name)
         plt.legend((line1, line2), ("training", "test"))
@@ -43,9 +41,16 @@ if __name__ == '__main__':
         for data in train:
             metrics = train_step(discriminator, generator, data)
 
-        print([f"{key}: {value}" for (key, value) in zip(list(metrics.keys()), list(metrics.values()))])
-        training_d_losses.append(metrics['d_loss'])
-        training_g_losses.append(metrics['g_loss'])
+        print(
+            [
+                f"{key}: {value}"
+                for (key, value) in zip(
+                    list(metrics.keys()), list(metrics.values())
+                )
+            ]
+        )
+        training_d_losses.append(metrics["d_loss"])
+        training_g_losses.append(metrics["g_loss"])
 
         discriminator.reset_metrics()
         generator.reset_metrics()
@@ -53,9 +58,16 @@ if __name__ == '__main__':
         for data in test:
             metrics = test_step(discriminator, generator, data)
 
-        print([f"test_{key}: {value}" for (key, value) in zip(list(metrics.keys()), list(metrics.values()))])
-        test_d_losses.append(metrics['d_loss'])
-        test_g_losses.append(metrics['g_loss'])
+        print(
+            [
+                f"test_{key}: {value}"
+                for (key, value) in zip(
+                    list(metrics.keys()), list(metrics.values())
+                )
+            ]
+        )
+        test_d_losses.append(metrics["d_loss"])
+        test_g_losses.append(metrics["g_loss"])
 
         discriminator.reset_metrics()
         generator.reset_metrics()
@@ -84,4 +96,3 @@ if __name__ == '__main__':
             ax.get_yaxis().set_visible(False)
 
         plt.show()
-
