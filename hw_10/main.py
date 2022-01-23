@@ -13,7 +13,9 @@ def main():
     bible = read_file("bible.txt")
     # -------- Task 2 "Word Embedding" ---------
     # -------- Task 2.1 "Preprocessing" ---------
-    bible = prepare_data(bible)
+    bible_pairs = prepare_data(bible)
+    dataset = tf.data.Dataset.from_tensor_slices(bible_pairs)
+    dataset = preprocess_dataset(dataset)
 
 
 if __name__ == "__main__":

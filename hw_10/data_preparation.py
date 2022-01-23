@@ -45,7 +45,7 @@ def prepare_data(data):
                 # pair current target word with window word.
                 bible_pairs.append((context_word, target_word))
 
-    tf.print(bible_pairs)
+    # tf.print(bible_pairs)
 
     return bible_pairs
 
@@ -59,7 +59,7 @@ def preprocess_dataset(ds):
     Returns:
       prepared dataset
     """
-    ds = ds.map(lambda seq, target: (seq, target))
+
     ds = ds.shuffle(256)
     ds = ds.batch(64)
     ds = ds.prefetch(128)
