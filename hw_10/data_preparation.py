@@ -20,13 +20,12 @@ def prepare_data(data):
     Returns:
       prepared data
     """
-    data.lower()
-    data.replace("\n", "")
+    data = data.lower()
+    data = data.replace("\n", "")
     data = re.sub("[^A-Za-z ]+", "", data)
     # split text into words
     data_tokens = tf_txt.WhitespaceTokenizer().split(data)
-    # TODO: change size to 1000
-    bible = data_tokens[:100]
+    bible = data_tokens[:10000]
 
     bible_pairs = []
     context_window = 4
@@ -45,7 +44,6 @@ def prepare_data(data):
                 # pair current target word with window word.
                 bible_pairs.append((context_word, target_word))
 
-    # tf.print(bible_pairs)
 
     return bible_pairs
 
@@ -59,9 +57,9 @@ def preprocess_dataset(ds):
     Returns:
       prepared dataset
     """
-
+    ds = ds.map(lambda inp: (inp[0], inp[1]))
     ds = ds.shuffle(256)
     ds = ds.batch(64)
-    ds = ds.prefetch(128)
+    ds = ds.prefetch(20)
 
     return ds

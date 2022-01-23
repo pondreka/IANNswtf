@@ -9,7 +9,6 @@ def train_step(
     model: tf.keras.Model,
     data: tf.Tensor,
     target: tf.Tensor,
-    loss_function: tf.keras.losses,
     optimizer: tf.keras.optimizers,
 ) -> (tf.Tensor, float):
     """Training iteration over one input data.
@@ -18,51 +17,36 @@ def train_step(
         model: Model to train.
         data: Data used to calculate the predictions.
         target: Targets for the loss and accuracy calculation.
-        loss_function: Function used to calculate the loss.
         optimizer: an optimizer to apply with the gradient
 
-    Returns:
-        (tf.Tensor, tf.Tensor): A tuple with the calculated loss and
-            accuracy.
     """
 
     with tf.GradientTape() as tape:
-        predictions = model(data)
-        prediction = predictions[:, -1]
-        loss = loss_function(target, prediction)
-        accuracy = target == np.round(prediction)
-        accuracy = np.mean(accuracy)
-        gradients = tape.gradient(loss, model.trainable_variables)
+        _, loss = model(data, target)
+    gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-    return loss, accuracy
+    return loss
 
 
 def test(
-    model: tf.keras.Model, test_data, loss_function: tf.keras.losses
+    model: tf.keras.Model, test_data,
 ) -> (tf.Tensor, float):
     """Test iteration over all test data.
 
     Args:
         :param model: Model to train.
         :param test_data: Dataset to test with the model.
-        :param loss_function: Function used to calculate the loss.
 
-    Returns:
-        (float, float): A tuple with the calculated loss and accuracy
     """
-    test_accuracy_aggregator = []
     test_loss_aggregator = []
     for (data, target) in test_data:
-        predictions = model(data, False)
-        prediction = predictions[:, -1]
-        sample_test_loss = loss_function(target, prediction)
-        sample_test_accuracy = target == np.round(prediction)
-        sample_test_accuracy = np.mean(sample_test_accuracy)
-        test_loss_aggregator.append(sample_test_loss.numpy())
-        test_accuracy_aggregator.append(np.mean(sample_test_accuracy))
+        _, loss = model(data, target)
+        test_loss_aggregator.append(loss.numpy())
 
     test_loss = tf.reduce_mean(test_loss_aggregator)
-    test_accuracy = tf.reduce_mean(test_accuracy_aggregator)
 
-    return test_loss, test_accuracy
+    # for word in test_words:
+    #     embedding, _ = model(word)
+
+    return test_loss
