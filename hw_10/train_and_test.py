@@ -1,69 +1,68 @@
 import tensorflow as tf
 import numpy as np
 
+# --------- task 2.3 "Training" ---------------
+# Definition of all the necessary functions for training
 
-# --------- task 3 "Training" ---------------
+
 def train_step(
-    discriminator: tf.keras.Model, generator: tf.keras.Model, data: tf.Tensor
+    model: tf.keras.Model,
+    data: tf.Tensor,
+    target: tf.Tensor,
+    loss_function: tf.keras.losses,
+    optimizer: tf.keras.optimizers,
 ) -> (tf.Tensor, float):
+    """Training iteration over one input data.
 
-    batch_size = 8
-    random_input = tf.random.normal([batch_size, 100])
+    Args:
+        model: Model to train.
+        data: Data used to calculate the predictions.
+        target: Targets for the loss and accuracy calculation.
+        loss_function: Function used to calculate the loss.
+        optimizer: an optimizer to apply with the gradient
 
-    with tf.GradientTape() as g_tape, tf.GradientTape() as d_tape:
+    Returns:
+        (tf.Tensor, tf.Tensor): A tuple with the calculated loss and
+            accuracy.
+    """
 
-        fake_data = generator(random_input, training=True)
-        fake_data_pred = discriminator(fake_data, training=True)
-        real_data_pred = discriminator(data, training=True)
+    with tf.GradientTape() as tape:
+        predictions = model(data)
+        prediction = predictions[:, -1]
+        loss = loss_function(target, prediction)
+        accuracy = target == np.round(prediction)
+        accuracy = np.mean(accuracy)
+        gradients = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-        d_loss = discriminator.loss_function(
-            real_data_pred, fake_data_pred
-        ) + tf.reduce_sum(discriminator.losses)
-        g_loss = generator.loss_function(fake_data_pred) + tf.reduce_sum(
-            generator.losses
-        )
-
-    d_gradients = d_tape.gradient(d_loss, discriminator.trainable_variables)
-    discriminator.optimizer.apply_gradients(
-        zip(d_gradients, discriminator.trainable_variables)
-    )
-
-    g_gradients = g_tape.gradient(g_loss, generator.trainable_variables)
-    generator.optimizer.apply_gradients(
-        zip(g_gradients, generator.trainable_variables)
-    )
-
-    discriminator.loss_metric.update_state(d_loss)
-    generator.loss_metric.update_state(g_loss)
-
-    return {
-        discriminator.loss_metric.name: discriminator.loss_metric.result(),
-        generator.loss_metric.name: generator.loss_metric.result(),
-    }
+    return loss, accuracy
 
 
-def test_step(
-    discriminator: tf.keras.Model, generator: tf.keras.Model, data: tf.Tensor,
+def test(
+    model: tf.keras.Model, test_data, loss_function: tf.keras.losses
 ) -> (tf.Tensor, float):
+    """Test iteration over all test data.
 
-    batch_size = 8
-    random_input = tf.random.normal([batch_size, 100])
+    Args:
+        :param model: Model to train.
+        :param test_data: Dataset to test with the model.
+        :param loss_function: Function used to calculate the loss.
 
-    fake_data = generator(random_input)
-    fake_data_pred = discriminator(fake_data)
-    real_data_pred = discriminator(data)
+    Returns:
+        (float, float): A tuple with the calculated loss and accuracy
+    """
+    test_accuracy_aggregator = []
+    test_loss_aggregator = []
+    for (data, target) in test_data:
+        predictions = model(data, False)
+        prediction = predictions[:, -1]
+        sample_test_loss = loss_function(target, prediction)
+        sample_test_accuracy = target == np.round(prediction)
+        sample_test_accuracy = np.mean(sample_test_accuracy)
+        test_loss_aggregator.append(sample_test_loss.numpy())
+        test_accuracy_aggregator.append(np.mean(sample_test_accuracy))
 
-    d_loss = discriminator.loss_function(
-        real_data_pred, fake_data_pred
-    ) + tf.reduce_sum(discriminator.losses)
-    g_loss = generator.loss_function(fake_data_pred) + tf.reduce_sum(
-        generator.losses
-    )
+    test_loss = tf.reduce_mean(test_loss_aggregator)
+    test_accuracy = tf.reduce_mean(test_accuracy_aggregator)
 
-    discriminator.loss_metric.update_state(d_loss)
-    generator.loss_metric.update_state(g_loss)
-
-    return {
-        discriminator.loss_metric.name: discriminator.loss_metric.result(),
-        generator.loss_metric.name: generator.loss_metric.result(),
-    }
+    return test_loss, test_accuracy
