@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 from data_preparation import read_file, prepare_data, preprocess_dataset
+from skipgram import SkipGram
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -16,6 +17,8 @@ def main():
     bible_pairs = prepare_data(bible)
     dataset = tf.data.Dataset.from_tensor_slices(bible_pairs)
     dataset = preprocess_dataset(dataset)
+
+    skipGram = SkipGram(10, 64)
 
 
 if __name__ == "__main__":

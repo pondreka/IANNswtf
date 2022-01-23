@@ -10,7 +10,7 @@ class SkipGram(tf.keras.layers.Layer):
         super(SkipGram, self).__init__()
 
         # Initialize vocabulary and embedding size.
-        self.vocabulary_size = vocab_size
+        self.vocabulary_size = vocabulary_size
         self.embedding_size = embedding_size
 
     def build(self) -> None:
@@ -39,7 +39,7 @@ class SkipGram(tf.keras.layers.Layer):
         :param inputs: Inputs for layer.
         """
 
-        # get the embeddings using tf.nn.embedding lookup()
+        # get the embeddings using tf.nn.embedding_lookup()
         embedding = tf.nn.embedding_lookup(self.embedding_weights, inputs)
 
         # calculate and return the loss using tf.nn.nce_loss
