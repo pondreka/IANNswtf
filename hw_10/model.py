@@ -5,32 +5,50 @@ import tensorflow as tf
 class SkipGram(tf.keras.layers.Layer):
     """A custom SkipGram layer"""
 
-    def __init__(self):
+    def __init__(self, vocabulary_size, embedding_size):
         """ Constructor """
         super(SkipGram, self).__init__()
 
-        # TODO: Initialize vocabulary and embedding size.
+        # Initialize vocabulary and embedding size.
+        self.vocabulary_size = vocab_size
+        self.embedding_size = embedding_size
 
-    def build(self, input_shape: tf.TensorShape) -> None:
+    def build(self) -> None:
         """Instantiation of weights and bias
 
         :param input_shape: shape for weights and bias creation.
         """
 
-        # TODO: initialize the embedding and score matrices of correct shape by using vocabulary and embedding size.
-        self.score_matrices = self.add_weight(
-            shape=(input_shape[-1], self.units),
-            initializer="random_normal",
-            trainable=True,
-        )
+        # initialize the embedding and score matrices of correct shape by using vocabulary and embedding size.
+        self.embedding_weights = self.add_weight(
+            shape=(self.vocabulary_size, self.embedding_size),
+            initializer='random_normal')
+
+        self.score_weights = self.add_weight(
+            shape=(self.vocabulary_size, self.embedding_size),
+            initializer='random_normal')
+
+        self.score_bias = self.add_weight(
+            shape= (self.vocabulary_size,),
+            initializer='random_normal')
 
     @tf.function
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         """Forward propagation
 
-        :param inputs: Inputs from layer.
+        :param inputs: Inputs for layer.
         """
-        # TODO: get the embeddings using tf.nn.embedding lookup()
 
-        # TODO: calculate and return the loss using tf.nn.nce_loss
-        return self.activation(incoming_inputs)
+        # get the embeddings using tf.nn.embedding lookup()
+        embedding = tf.nn.embedding_lookup(self.embedding_weights, inputs)
+
+        # calculate and return the loss using tf.nn.nce_loss
+        loss = tf.nn.nce_loss(
+            weights=self.score_weights,
+            biases=self.score_bias,
+            labels=target,
+            inputs=embedding,
+            num_classes=self.vocabulary_size,
+        )
+
+        return loss
