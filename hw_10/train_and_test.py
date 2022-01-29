@@ -20,9 +20,8 @@ def train_step(
         optimizer: an optimizer to apply with the gradient
 
     """
-
     with tf.GradientTape() as tape:
-        _, loss = model(data, target)
+        loss = model(data, target)
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -41,7 +40,7 @@ def test(
     """
     test_loss_aggregator = []
     for (data, target) in test_data:
-        _, loss = model(data, target)
+        loss = model(data, target)
         test_loss_aggregator.append(loss.numpy())
 
     test_loss = tf.reduce_mean(test_loss_aggregator)
