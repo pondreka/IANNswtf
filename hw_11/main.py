@@ -12,10 +12,14 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 def main():
 
     # -------- Task 1 "Data set" ---------
-    bible = read_file("bible.txt")
+    # path = tf.keras.utils.get file(”nietzsche.txt”,
+    # origin=”https://s3.amazonaws.com/text-datasets/nietzsche.txt”)
+    # TODO: pass link string to get_file
+    text = get_file()
+
     # -------- Task 2 "Word Embedding" ---------
     # -------- Task 2.1 "Preprocessing" ---------
-    bible_pairs, id_to_word, word_to_id = prepare_data(bible)
+    bible_pairs, id_to_word, word_to_id = prepare_data(text)
     dataset = tf.data.Dataset.from_tensor_slices(bible_pairs)
     train_data = dataset.take(7000)
     test_data = dataset.skip(7000)
