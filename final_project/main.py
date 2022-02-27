@@ -1,6 +1,7 @@
 import gym
 from ale_py import ALEInterface
 from ale_py.roms import Pong
+from model import DQN
 
 
 def main():
