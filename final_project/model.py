@@ -58,7 +58,13 @@ class DQN:
         self.model = MainModel(num_states, hidden_units, num_actions)
         # types of experience to save:
         # States, Actions, Rewards, NextState, Done/Goal
-        self.experience: dict = {"s": [], "a": [], "r": [], "s2": [], "done": []}
+        self.experience: dict = {
+            "s": [],
+            "a": [],
+            "r": [],
+            "s2": [],
+            "done": [],
+        }
         # max amount of experience to keep track off. After this amount,
         # the oldest ones shall be deleted.
         self.max_experiences: int = max_experiences
