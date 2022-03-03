@@ -50,20 +50,20 @@ class DQN:
         batch_size,
         lr,  # the lean rate
     ):
-        self.num_actions = num_actions
-        self.batch_size = batch_size
+        self.num_actions: int = num_actions
+        self.batch_size: int = batch_size
         self.optimizer = tf.optimizers.Adam(lr)
         # discount rate: [0, 1) so not too much reward is given
-        self.gamma = gamma
+        self.gamma: float = gamma
         self.model = MainModel(num_states, hidden_units, num_actions)
         # types of experience to save:
         # States, Actions, Rewards, NextState, Done/Goal
-        self.experience = {"s": [], "a": [], "r": [], "s2": [], "done": []}
+        self.experience: dict = {"s": [], "a": [], "r": [], "s2": [], "done": []}
         # max amount of experience to keep track off. After this amount,
         # the oldest ones shall be deleted.
-        self.max_experiences = max_experiences
+        self.max_experiences: int = max_experiences
         # Minimum amount of experience required to learn.
-        self.min_experiences = min_experiences
+        self.min_experiences: int = min_experiences
 
     def predict(self, inputs):
         """Attempt to predict outcome based on intern model.
@@ -72,11 +72,11 @@ class DQN:
         """
         return self.model(np.atleast_2d(inputs.astype("float32")))
 
-    def train(self, TargetNet):
+    def train(self, target_network):
         """Model training function to call each epoch."""
         if len(self.experience["s"]) < self.min_experiences:
             return 0
-        ids = np.random.randint(
+        ids: int = np.random.randint(
             low=0, high=len(self.experience["s"]), size=self.batch_size
         )
         states = np.asarray([self.experience["s"][i] for i in ids])
@@ -84,7 +84,7 @@ class DQN:
         rewards = np.asarray([self.experience["r"][i] for i in ids])
         states_next = np.asarray([self.experience["s2"][i] for i in ids])
         dones = np.asarray([self.experience["done"][i] for i in ids])
-        value_next = np.max(TargetNet.predict(states_next), axis=1)
+        value_next = np.max(target_network.predict(states_next), axis=1)
         actual_values = np.where(
             dones, rewards, rewards + self.gamma * value_next
         )
@@ -121,9 +121,9 @@ class DQN:
         for key, value in exp.items():
             self.experience[key].append(value)
 
-    def copy_weights(self, TrainNet):
+    def copy_weights(self, train_network):
         """Helper funciton to help clone the network."""
         variables1 = self.model.trainable_variables
-        variables2 = TrainNet.model.trainable_variables
+        variables2 = train_network.model.trainable_variables
         for v1, v2 in zip(variables1, variables2):
             v1.assign(v2.numpy())
