@@ -4,6 +4,9 @@ from ale_py.roms import Pong
 from gameplay import make_video, play_game
 import gym
 from model import DQN
+import tensorflow as tf
+import numpy as np
+
 
 
 def main():
