@@ -70,7 +70,7 @@ def main():
             env, train_network, target_network, epsilon, copy_step
         )
         total_rewards[_t] = total_reward
-        avg_rewards = total_rewards[max(0, _t - 100) : (_t + 1)].mean()
+        avg_rewards = total_rewards[max(0, _t - 100): (_t + 1)].mean()
         with summary_writer.as_default():
             tf.summary.scalar("episode reward", total_reward, step=_t)
             tf.summary.scalar("running avg reward(100)", avg_rewards, step=_t)

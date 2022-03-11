@@ -91,6 +91,8 @@ class DQN:
         states_next = np.asarray([self.experience["s2"][i] for i in ids])
         dones = np.asarray([self.experience["done"][i] for i in ids])
         value_next = np.max(target_network.predict(states_next), axis=1)
+        # value_next = np.max(value_next, axis=1)
+        # value_next = np.max(value_next, axis=1)
         actual_values = np.where(
             dones, rewards, rewards + self.gamma * value_next
         )
