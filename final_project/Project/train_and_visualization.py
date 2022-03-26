@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 
-# choose action by thompson sampling
 def choose_action(model, x, epoch, max_epoch, alpha):
+    """Choose action considering thompson sampling"""
 
     if epoch < int(max_epoch / 2):
         # high temperature (low value) produces nearly probabilities of 0.5
@@ -22,15 +22,26 @@ def choose_action(model, x, epoch, max_epoch, alpha):
     return action + 3  # add 3 to get correct action index (3 = up, 4 = down)
 
 
-# calculate q target
 def calculate_targets(q_values, rewards, gamma):
+    """Calculate the Q target"""
     q_targets = rewards + gamma * tf.reduce_max(q_values)
     return q_targets
 
 
 # train based on data samples from erb
 def training(data, model, loss_function, optimizer, gamma):
+    """Train the model for the number of epochs specified.
 
+    Args:
+        data:  dataset
+        model: model to train.
+        loss_function: loss function used for the training and test the model.
+        optimizer:  optimizer for the train step.
+        gamma:  # TODO.
+
+    Returns:
+        training loss
+    """
     loss_aggregator = []
 
     for s, a, r, n in data:
@@ -54,11 +65,16 @@ def training(data, model, loss_function, optimizer, gamma):
     return test_loss
 
 
-# visualize average losses and rewards in two plots
+#
 def visualize(losses, rewards):
-    fig, ax = plt.subplots(
-        nrows=2, ncols=1, sharex=True, figsize=(9, 6)
-    )
+    """Prepares the visualization on two plots in a single subplot
+       displaying the average losses and rewards.
+
+    Args:
+       losses: average of all the losses for each epoch
+       rewards: average of all the rewards for each epoch
+    """
+    fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(9, 6))
     ax[0].plot(losses, label="loss")
     ax[1].plot(rewards, label="reward")
     ax[0].set(ylabel="Average loss", title="Learning progress over epochs")
