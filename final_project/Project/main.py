@@ -11,10 +11,10 @@ batch_size = 8  # small batch to not overload the gpu
 gamma = 0.99  # discount factor for reward
 alpha = 0.000001  # scaling factor for thompson sampling
 learning_rate = 0.01
-max_memory = 1000
-sample_size = 200
-num_new_frames = 50
-epochs = 200
+max_memory = 100000
+sample_size = 2000
+num_new_frames = 500
+epochs = 20000
 
 # model initialization
 dq_model = DQModel(num_hidden_neurons)
