@@ -1,7 +1,7 @@
 import gym
-# import random
-# from ale_py import ALEInterface
-# from ale_py.roms import Pong
+import random
+from ale_py import ALEInterface
+from ale_py.roms import Pong
 from model import DQModel
 import tensorflow as tf
 from collections import deque
@@ -13,11 +13,11 @@ H = 200  # number of hidden layer neurons
 batch_size = 8  # samll batch to not overload the gpu
 gamma = 0.99  # discount factor for reward
 learning_rate: float = 0.01
-max_memory = 100000
-sample_size = 2000
+max_memory = 1000
+sample_size = 200
 num_new_frames = 100
 alpha = 0.000001  # scaling factor for thompson sampling
-epochs = 20000
+epochs = 200
 
 # model initialization
 dq_model = DQModel(H)
@@ -193,7 +193,9 @@ for epoch in range(epochs):
         # step the environment and add to experience replay buffer
         next_state, reward, done, _ = env.step(action)
         memory.append((state, action, reward, next_state))
-        reward_aggregator.append(reward)
+
+        if reward != 0:
+            reward_aggregator.append(reward)
 
         # next state is the state to make the next action from
         state = next_state
@@ -210,21 +212,26 @@ for epoch in range(epochs):
 
 
     # calculate average reward for the episode and print it
-    average_reward = tf.reduce_mean(reward_aggregator)
-    epoch_rewards.append(average_reward)
+    if len(reward_aggregator) > 0:
+        average_reward = tf.reduce_mean(reward_aggregator)
+        epoch_rewards.append(average_reward)
 
     print('episode reward total was %f. running mean: %f' % (
     average_reward, tf.reduce_mean(epoch_rewards)))
 
 
 def visualization(losses, rewards):
-    plt.figure()
-    (line1,) = plt.plot(losses)
-    (line2,) = plt.plot(rewards)
+    fig, ax = plt.subplots(
+        nrows=2, ncols=1, sharex=True, figsize=(9, 6)
+    )
+    fig.subtitle("Learning progress over epochs")
+    ax[0].plot(losses, label="loss")
+    ax[1].plot(rewards, label="reward")
+    ax[0].set(ylabel="Average loss")
+    ax[1].set(ylabel="Average reward")
     plt.xlabel("Epochs")
-    plt.ylabel("Average per epoch")
-    plt.legend((line1, line2), ("loss", "reward"))
+    plt.tight_layout()
     plt.show()
 
-
+# plot reward and loss
 visualization(epoch_losses, epoch_rewards)
