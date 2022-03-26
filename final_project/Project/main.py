@@ -5,7 +5,10 @@ from collections import deque
 from data import prepare_data, prepare_state
 from train_and_visualization import visualize, training, choose_action
 
-# hyperparameters
+# checkpoints saving path
+checkpoint_path = "checkpoints/cp.ckpt"
+
+# hyper-parameters
 num_hidden_neurons = 200  # number of hidden layer neurons
 batch_size = 8  # small batch to not overload the gpu
 gamma = 0.99  # discount factor for reward
@@ -105,6 +108,10 @@ for epoch in range(epochs):
 
     # train and track loss
     average_loss = training(memory_sample, dq_model, mse, adam_optimizer, gamma)
+
+    # Save the weights using the `checkpoint_path` format
+    dq_model.save_weights(checkpoint_path.format(epoch=epoch))
+
     epoch_losses.append(average_loss)
 
     print('ep %d: episode loss total was %f. running mean: %f'
