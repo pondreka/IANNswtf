@@ -1,6 +1,22 @@
 import tensorflow as tf
 
 
+def prepare_data(dataset, sample_size, batch_size):
+
+    # normalize image values
+    ds = dataset.map(lambda s, a, r, n: (s / 255, a, r, n / 255))
+    # one hot encode actions
+    ds = ds.map(lambda s, a, r, n:
+                (s, tf.where(tf.equal(a, 3), [1.0, 0.0], [0.0, 1.0]), r, n))
+
+    ds = ds.cache()
+    ds = ds.shuffle(int(sample_size / 2))
+    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.prefetch(int(batch_size * 2))
+
+    return ds
+
+
 # get the state for picking the next action in the right shape to fit through the model
 def prepare_state(state):
 
@@ -12,7 +28,4 @@ def prepare_state(state):
     return state
 
 
-# calculate q target
-def calculate_targets(q_values, rewards, gamma):
-    q_targets = rewards + gamma * tf.reduce_max(q_values)
-    return q_targets
+

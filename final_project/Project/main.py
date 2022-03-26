@@ -1,31 +1,32 @@
 import gym
-import random
-from ale_py import ALEInterface
-from ale_py.roms import Pong
 from model import DQModel
 import tensorflow as tf
 from collections import deque
-from data import prepare_state, calculate_targets
-import matplotlib.pyplot as plt
+from data import prepare_data, prepare_state
+from train_and_visualization import visualize, training, choose_action
 
 # hyperparameters
-H = 200  # number of hidden layer neurons
-batch_size = 8  # samll batch to not overload the gpu
+num_hidden_neurons = 200  # number of hidden layer neurons
+batch_size = 8  # small batch to not overload the gpu
 gamma = 0.99  # discount factor for reward
-learning_rate: float = 0.01
+alpha = 0.000001  # scaling factor for thompson sampling
+learning_rate = 0.01
 max_memory = 1000
 sample_size = 200
-num_new_frames = 100
-alpha = 0.000001  # scaling factor for thompson sampling
+num_new_frames = 50
 epochs = 200
 
 # model initialization
-dq_model = DQModel(H)
+dq_model = DQModel(num_hidden_neurons)
 mse = tf.keras.losses.MeanSquaredError()
 adam_optimizer = tf.keras.optimizers.Adam(learning_rate)
 
 # experience replay buffer
 memory = deque(maxlen=max_memory)
+
+# tracker for losses and rewards
+epoch_losses = []
+epoch_rewards = []
 
 
 # data generator
@@ -49,49 +50,6 @@ dataset = tf.data.Dataset.from_generator(
     ),
 )
 
-
-# choose action by thompson sampling
-def choose_action(model, x, episode):
-
-    if episode < int(epochs / 2):
-        temperature = 1  # high temperature (low value) produces nearly probabilities of 0.5
-    else:
-        episode = tf.cast(episode, tf.float32)
-        temperature = 1 + alpha * tf.math.log(episode)  # getting lower temperature (higher values) for later episodes
-                                                        # for more differenciated probabilities
-
-    p = model(x)
-    probs = tf.nn.softmax(p * temperature)  # thompson sampling
-    action = int(tf.random.categorical(probs, 1))  # get action dependent on higher probability
-
-    return action + 3  # add 3 to get correct action index (3 = up, 4 = down)
-
-
-# train based on data samples from erb
-def training(data, model, loss_function, optimizer, gamma):
-
-    loss_aggregator = []
-
-    for s, a, r, n in data:
-        # calculate q values for next state
-        q_values = model(n)
-        # calculate target by target = reward + gamma * argmax(q_values)
-        targets = calculate_targets(q_values, r, gamma)
-
-        with tf.GradientTape() as tape:
-            # make predictions for current state
-            q_preds = model(s)
-            # calculate loss between taget and q prediction for the action
-            loss = loss_function(targets, tf.reduce_sum(q_preds * a, axis=-1))
-            loss_aggregator.append(loss.numpy())
-            # update gradient and optimizer
-            gradients = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    test_loss = tf.reduce_mean(loss_aggregator)
-
-    return test_loss
-
 # setup environment
 env = gym.make(
     "ALE/Pong-v5",
@@ -104,27 +62,21 @@ env = gym.make(
     render_mode=None,  # None | human | rgb_array
 )
 
-# # render environment
-# ale = ALEInterface()
-# ale.loadROM(Pong)
 
 frame_count = 0
 state = env.reset()
-running_reward = None
-reward_sum = 0
 
 # initializing experience replay buffer
-# fill with 20000 samples first
 while len(memory) < sample_size:
 
     # convert to tensor and normalize
     # don't overwrite state
-    # otherwise there will be a different data format in the datagenerator
+    # otherwise there will be a different data format in the data generator
     prep_state = prepare_state(state)
 
     # choose action
     # for data preparation episode = 0
-    action = choose_action(dq_model, prep_state, 0)
+    action = choose_action(dq_model, prep_state, 0, epochs, alpha)
 
     # step the environment and add to experience replay buffer
     next_state, reward, done, _ = env.step(action)
@@ -132,106 +84,72 @@ while len(memory) < sample_size:
 
     # next state is the state to make the next action from
     state = next_state
-
-    reward_sum += reward
     frame_count += 1
 
     if done:  # about 1000 frames
-
-        # boring book-keeping
-        running_reward = reward_sum if running_reward is None else running_reward * 0.99 + reward_sum * 0.01
-        print('resetting env. episode reward total was %f. running mean: %f' % (reward_sum, running_reward))
-
-        reward_sum = 0
         state = env.reset()  # reset env
 
     if reward != 0:  # Pong has either +1 or -1 reward exactly when game ends.
-        print('frames %d: game finished, reward: %f' % (frame_count, reward) + ('' if reward == -1 else ' !!!!!!!!'))
+        print('frames %d: game finished, reward: %f' % (frame_count, reward) +
+              ('' if reward == -1 else ' !!!!!!!!'))
 
-# actual training
-frame_count = 0
-state = env.reset()
-running_reward = None
-reward_sum = 0
 
-epoch_losses = []
-epoch_rewards = []
-
+# start training
 for epoch in range(epochs):
 
     frame_count = 0
+    reward_aggregator = []
 
-    ### data pipeline
-    # batching did somehow not work in a function
-    # normalize image values
-    # one hot encode actions
-    memory_sample = dataset.take(sample_size)\
-        .map(lambda s, a, r, n: (s / 255, a, r, n / 255))\
-        .map(lambda s, a, r, n: (s, tf.where(tf.equal(a, 3), [1.0, 0.0], [0.0, 1.0]), r, n))\
-        .cache().shuffle(int(sample_size / 2)).batch(batch_size, drop_remainder=True).prefetch(int(batch_size * 2))
+    # prepare the samples
+    memory_sample = prepare_data(dataset.take(sample_size), sample_size, batch_size)
 
-    ### training
+    # train and track loss
     average_loss = training(memory_sample, dq_model, mse, adam_optimizer, gamma)
     epoch_losses.append(average_loss)
 
-    print('episode loss total was %f. running mean: %f' % (
-        average_loss, tf.reduce_mean(epoch_losses)))
+    print('ep %d: episode loss total was %f. running mean: %f'
+          % (epoch, average_loss, tf.reduce_mean(epoch_losses)))
 
-    reward_aggregator = []
-
-    ### generating new samples
+    # generating new samples
     while frame_count < num_new_frames:
 
         # convert to tensor and normalize
         # don't overwrite state
-        # otherwise there will be a different data format in the datagenerator
+        # otherwise there will be a different data format in the data generator
         prep_state = prepare_state(state)
 
         # choose action
-        action = choose_action(dq_model, prep_state, epoch)
+        action = choose_action(dq_model, prep_state, epoch, epochs, alpha)
 
         # step the environment and add to experience replay buffer
         next_state, reward, done, _ = env.step(action)
         memory.append((state, action, reward, next_state))
 
+        # track reward
+        # add only if a point was made
         if reward != 0:
             reward_aggregator.append(reward)
 
         # next state is the state to make the next action from
         state = next_state
-
         frame_count += 1
 
         if done:  # reset of environment
-
-            # todo: save samples and convert to video or gif
             state = env.reset()  # reset env
 
         if reward != 0:  # Pong has either +1 or -1 reward exactly when game ends.
-            print('ep %d: game finished, reward: %f' % (epoch, reward) + ('' if reward == -1 else ' !!!!!!!!'))
-
+            print('ep %d: game finished, reward: %f' % (epoch, reward) +
+                  ('' if reward == -1 else ' !!!!!!!!'))
 
     # calculate average reward for the episode and print it
+    # only if at least one game did end within the epoch
     if len(reward_aggregator) > 0:
         average_reward = tf.reduce_mean(reward_aggregator)
         epoch_rewards.append(average_reward)
 
-    print('episode reward total was %f. running mean: %f' % (
-    average_reward, tf.reduce_mean(epoch_rewards)))
+        print('ep %d: episode reward total was %f. running mean: %f'
+              % (epoch, average_reward, tf.reduce_mean(epoch_rewards)))
 
 
-def visualization(losses, rewards):
-    fig, ax = plt.subplots(
-        nrows=2, ncols=1, sharex=True, figsize=(9, 6)
-    )
-    fig.subtitle("Learning progress over epochs")
-    ax[0].plot(losses, label="loss")
-    ax[1].plot(rewards, label="reward")
-    ax[0].set(ylabel="Average loss")
-    ax[1].set(ylabel="Average reward")
-    plt.xlabel("Epochs")
-    plt.tight_layout()
-    plt.show()
-
-# plot reward and loss
-visualization(epoch_losses, epoch_rewards)
+# plot average reward and loss per epoch
+visualize(epoch_losses, epoch_rewards)
