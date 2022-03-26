@@ -1,6 +1,7 @@
 import gym
-from model import DQModel
 import tensorflow as tf
+import random
+from model import DQModel
 from collections import deque
 from data import prepare_data, prepare_state
 from train_and_visualization import visualize, training, choose_action
@@ -34,13 +35,12 @@ def main():
     epoch_rewards = []
 
     def data_generator():
-        """data generator which picks random samples out of the erb"""
+        """ data generator which picks random samples out of the erb """
         while True:
-            # go from beginning to end and start new
-            for i in range(len(memory)):
-                yield memory[i]
+            # get random memory data
+            yield random.choice(memory)
 
-    # dataset generated out of generator data
+            # dataset generated out of generator data
     # gets every episode new data
     dataset = tf.data.Dataset.from_generator(
         data_generator,
@@ -90,9 +90,7 @@ def main():
         if done:  # about 1000 frames
             state = env.reset()  # reset env
 
-        if (
-            reward != 0
-        ):  # Pong has either +1 or -1 reward exactly when game ends.
+        if reward != 0:  # Pong has either +1 or -1 reward exactly when game ends.
             print(
                 "frames %d: game finished, reward: %f" % (frame_count, reward)
                 + ("" if reward == -1 else " !!!!!!!!")
